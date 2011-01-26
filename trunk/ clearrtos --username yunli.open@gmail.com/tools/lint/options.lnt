@@ -1,0 +1,38 @@
+// Please note -- this is a representative set of error suppression
+//                options.  Please adjust to suit your own policies
+//                See  manual (chapter LIVING WITH LINT)
+//                for further details.
+
+// unit checkout
+-u
+
+-d__CYGWIN__
+-d_HAVE_STDC
+-dUNITEST
+
+// libraries for your environment
+-IC:\cygwin\lib\gcc\i686-pc-cygwin\4.3.4\include\c++
+-IC:\cygwin\lib\gcc\i686-pc-cygwin\4.3.4\include\c++\i686-pc-cygwin
+-IC:\cygwin\lib\gcc\i686-pc-cygwin\4.3.4\include\c++\backward
+-IC:\cygwin\lib\gcc\i686-pc-cygwin\4.3.4\include
+-IC:\cygwin\lib\gcc\i686-pc-cygwin\4.3.4\include-fixed
+-IC:\cygwin\usr\include
+
+-wlib(0)
+
+-e746
+// disable the macro warning for unrefered and unused
+-e755 -e757
+// old style comment
+-e1904
+// macro could become const variable
+-e1923
+// constructor has private access specification
+-e1704
+-e537
+// Use of goto is deprecated
+-e801
+-e952
+-e953
+-e954
+-e1932
