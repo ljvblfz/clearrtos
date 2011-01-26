@@ -1,0 +1,1 @@
+ctrlc driver is ONLY used on Simulator. It is used to handle user press the Ctrl+C for terminating program.

@@ -1,0 +1,8 @@
+//  Gnu C/C++ (version 2.95.3 or later), -si4 -sp4, lib-stl.lnt
+//  Standard lint options
+
+au-sm123.lnt
+co-gnu3.lnt
+options.lnt
+
+-si4 -sp4
