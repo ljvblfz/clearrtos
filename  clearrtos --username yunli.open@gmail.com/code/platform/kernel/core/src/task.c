@@ -116,9 +116,10 @@ error_t task_state_change (task_handler_t _handler, task_state_t _new_state)
     {
     case TASK_STATE_CREATED:
         {
-            char timer_name [NAME_MAX_LENGTH + 1] = "Task:";
+            #define TIMER_PREFIX    "Task:"
+            char timer_name [NAME_MAX_LENGTH + 1] = TIMER_PREFIX;
             
-            // initialize the stack sith MAGIC_NUMBER_STACK
+            // initialize the stack with value of MAGIC_NUMBER_STACK
             stack_unit_t *p_unit = (stack_unit_t *)_handler->stack_base_;
             int count = _handler->stack_size_ >> STACK_WIDTH_SHIFT4BYTE;
             
@@ -128,7 +129,8 @@ error_t task_state_change (task_handler_t _handler, task_state_t _new_state)
             }
             context_init (&_handler->context_, _handler->stack_base_, 
                 _handler->stack_size_, (address_t) task_main);
-            strncpy (&timer_name [5], _handler->name_, sizeof (timer_name) - 6);
+            strncpy (&timer_name [sizeof (TIMER_PREFIX)], _handler->name_, 
+                sizeof (timer_name) - (sizeof (TIMER_PREFIX) + 1));
             timer_name [sizeof (timer_name) - 1] = 0;
             ecode = timer_alloc (&_handler->timer_, timer_name, TIMER_TYPE_INTERRUPT);
             if (0 != ecode) {
