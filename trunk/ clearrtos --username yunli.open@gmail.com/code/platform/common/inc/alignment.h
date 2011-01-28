@@ -28,9 +28,9 @@
 
 #include "primitive.h"
 
-#define ROUND_UP(_addr, _alignment)	(((_addr) + (_alignment - 1)) & ~(_alignment - 1))
-#define ROUND_DOWN(_addr, _alignment)	((_addr) & ~(_alignment - 1))
-#define IS_ALIGNED(_addr, _alignment)	(0 == ((_addr) & (_alignment - 1)))
+#define ROUND_UP(_addr, _alignment) (((_addr) + (_alignment - 1)) & ~(_alignment - 1))
+#define ROUND_DOWN(_addr, _alignment)   ((_addr) & ~(_alignment - 1))
+#define IS_ALIGNED(_addr, _alignment)   (0 == ((_addr) & (_alignment - 1)))
 
 #define ALIGN(_addr, _alignment) \
     (((_addr) + ((_alignment) - 1)) & ~((_alignment) - 1))

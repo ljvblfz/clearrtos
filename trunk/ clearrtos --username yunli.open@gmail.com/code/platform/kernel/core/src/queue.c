@@ -87,7 +87,8 @@ error_t queue_create (const char _name [], queue_handler_t *_p_handler,
     static bool initialized = false;
     interrupt_level_t level;
     queue_handler_t handler;
-    char sem_name [NAME_MAX_LENGTH + 1] = "Queue:";
+    #define SEMAPHORE_PREFIX    "Queue:"
+    char sem_name [NAME_MAX_LENGTH + 1] = SEMAPHORE_PREFIX;
     error_t ecode;
 
     if (is_in_interrupt ()) {
@@ -108,7 +109,8 @@ error_t queue_create (const char _name [], queue_handler_t *_p_handler,
     memset (handler, 0, sizeof (*handler));
     handler->magic_number_ = MAGIC_NUMBER_QUEUE;
     global_interrupt_enable (level);
-    strncpy (&sem_name [6], _name, sizeof (sem_name) - 7);
+    strncpy (&sem_name [sizeof (SEMAPHORE_PREFIX)], _name, 
+        sizeof (sem_name) - (sizeof (SEMAPHORE_PREFIX) + 1));
     sem_name [sizeof (sem_name) - 1] = 0;
     ecode = semaphore_create (&handler->semaphore_, _name, 0);
     if (ecode != 0) {
