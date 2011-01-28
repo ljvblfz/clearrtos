@@ -89,7 +89,7 @@ static bool mutex_callback_unlock (sync_object_handler_t _handler,
         task_priority_change (p_mutex->owner_, p_mutex->original_);
     }
     if (task_bitmap_is_empty (&p_mutex->object_.pending_bitmap_)) {
-        // no task is pending on this semaphore
+        // no task is pending on this mutex
         p_mutex->owner_ = null;
         return true;
     }
