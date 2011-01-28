@@ -95,31 +95,25 @@ static inline bool mtail_integrity_check (register const mtail_t* _p_mtail)
 
 error_t heap_init (address_t _start, address_t _end, msize_t _alignment_in_bits)
 {
-    interrupt_level_t level;
     mblock_t* p_mblock;
 
     if (_start > _end) {
         return ERROR_T (ERROR_HEAP_INIT_INVADDR);
+    }
+    if (g_initialized) {
+        return 0;
     }
     g_alignment_in_bits = _alignment_in_bits;
     g_alignment_bytes = ((msize_t)1 << g_alignment_in_bits);
     if (sizeof (int) > g_alignment_bytes) {
         return ERROR_T (ERROR_HEAP_INIT_INVALIGN);
     }
-    level = global_interrupt_disable ();
-    if (g_initialized) {
-        global_interrupt_enable (level);
-        return 0;
-    }
-    g_initialized = true;
-    global_interrupt_enable (level);
     
     g_mhead_size = (sizeof (mhead_t) + g_alignment_bytes - 1) 
         >> g_alignment_in_bits;
     g_mtail_size = (sizeof (mtail_t) + g_alignment_bytes - 1) 
         >> g_alignment_in_bits;
-    // initialize the g_mblock_free, it holds first free block from which can
-    // be allocated
+    // initialize the g_mblock_free, it holds first free block
     g_mblock_free.next_ = ALIGN (_start, g_alignment_bytes);
     // the length is in g_alignment_bytes unit
     g_mblock_free.size_ = (_end - g_mblock_free.next_) 
@@ -135,6 +129,8 @@ error_t heap_init (address_t _start, address_t _end, msize_t _alignment_in_bits)
     g_heap_addr_end = g_mblock_free.next_ + 
         (g_mblock_free.size_ << g_alignment_in_bits);
     g_heap_size = g_mblock_free.size_;
+    
+    g_initialized = true;
     return 0;
 }
 

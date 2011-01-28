@@ -66,8 +66,8 @@ extern "C" {
 error_t mpool_create (const char _name [], mpool_handler_t *_p_handler, 
     void *_node, void *_buffer, msize_t _buffer_size, msize_t _buffer_count);
 error_t mpool_delete (mpool_handler_t _handler);
-void* mpool_alloc (mpool_handler_t _handler);
-error_t mpool_free (mpool_handler_t _handler, void* _p_buf);
+void* mpool_buffer_alloc (mpool_handler_t _handler);
+error_t mpool_buffer_free (mpool_handler_t _handler, void* _p_buf);
 void mpool_dump ();
 error_t module_mpool (system_state_t _state);
 
