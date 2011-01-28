@@ -138,7 +138,7 @@ error_t mpool_delete (mpool_handler_t _handler)
     return 0;
 }
 
-void* mpool_alloc (mpool_handler_t _handler)
+void* mpool_buffer_alloc (mpool_handler_t _handler)
 {
     interrupt_level_t level;
     mpool_node_t *p_node;
@@ -159,7 +159,7 @@ void* mpool_alloc (mpool_handler_t _handler)
     return (void *)p_node->addr_;
 }
 
-error_t mpool_free (mpool_handler_t _handler, void* _p_buf)
+error_t mpool_buffer_free (mpool_handler_t _handler, void* _p_buf)
 {
     address_t free_addr = (address_t)_p_buf;
     interrupt_level_t level;
