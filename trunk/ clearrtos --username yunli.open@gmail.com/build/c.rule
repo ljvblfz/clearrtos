@@ -142,7 +142,7 @@ endif
 $(DIRS):
 	$(MKDIR) $@
 $(EXE): $(DEP_DIR_TARGET) $(OBJS) $(DEP_LIBS)
-	$(CC) -L$(DIR_TARGET) -o $@ $(filter %.o, $^) $(LINK_LIBS)
+	$(CC) -L$(DIR_TARGET) -o $@ $(filter %.o, $^) -Wl,-Map=$@.map $(LINK_LIBS)
 $(UTS): $(DEP_DIR_TARGET) $(DEP_LIBS)
 	$(CC) -L$(DIR_TARGET) -o $@ $(filter %.o, $^) $(LINK_LIBS)
 $(LIB): $(DEP_DIR_TARGET) $(OBJS)
