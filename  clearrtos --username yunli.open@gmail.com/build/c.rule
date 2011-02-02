@@ -29,7 +29,7 @@ CHKER = lint-nt.exe
 
 RMFLAGS = -fr
 ARFLAGS = crs
-CFLAGS += -Wall -std=gnu99
+CFLAGS += -std=gnu99
 CHKFLAGS = -v std.lnt
 
 ROOT := $(abspath $(ROOT))
@@ -43,21 +43,21 @@ ifeq ("$(MAKECMDGOALS)", "release")
 DIR_OBJS = robjs
 AR = ar
 CC = gcc
-CFLAGS += -g -O2
+CFLAGS += -Wall -g -O2
 endif
 
 ifeq ("$(MAKECMDGOALS)", "debug")
 DIR_OBJS = dobjs
 AR = ar
 CC = gcc
-CFLAGS += -g3
+CFLAGS += -Werror -g3
 endif
 
 ifeq ("$(MAKECMDGOALS)", "unitest")
 DIR_OBJS = uobjs
 AR = ar
 CC = gcc
-CFLAGS += -g3 -DUNITEST -fprofile-arcs -ftest-coverage
+CFLAGS += -Werror -g3 -DUNITEST -fprofile-arcs -ftest-coverage
 LINK_LIBS += gcov
 endif
 
