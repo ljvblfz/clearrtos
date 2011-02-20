@@ -121,7 +121,7 @@ touch:
 	@echo "Processing ..."
 	@find $(ROOT) -exec touch {} \;
 	@echo ""
-	@echo ":-) Done"
+	@echo ":-) Completed"
 	@echo ""
 
 REPORT = unitest.report
