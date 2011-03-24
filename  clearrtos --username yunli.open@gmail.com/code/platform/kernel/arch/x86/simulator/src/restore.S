@@ -34,7 +34,7 @@ context_restore:
 	// get _p_context of context_restore ()
 	movl FRAME_OFFSET_PARAM0(%esp), %ecx
 	
-	// take second parameter of context_restore () as return value of context_save ()
+	// take 2nd parameter of context_restore () as return value of context_save ()
 	movl FRAME_OFFSET_PARAM1(%esp), %eax
 	
 	// restore registers from context
