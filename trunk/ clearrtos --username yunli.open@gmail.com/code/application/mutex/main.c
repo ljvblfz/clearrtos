@@ -33,7 +33,7 @@ static void task_high (const char _name [], void *_p_arg)
     mutex_handler_t mutex = (mutex_handler_t)_p_arg;
 
     console_print ("%s: going to take lock\n", _name);
-    (void) mutex_lock (mutex, 0);
+    (void) mutex_lock (mutex, WAIT_FOREVER);
     console_print ("%s: lock is taken\n", _name);
     console_print ("%s: going to sleep\n", _name);
     (void) task_sleep (1000);
@@ -48,7 +48,7 @@ static void task_low (const char _name [], void *_p_arg)
     mutex_handler_t mutex = (mutex_handler_t)_p_arg;
 
     console_print ("%s: going to take lock\n", _name);
-    (void) mutex_lock (mutex, 0);
+    (void) mutex_lock (mutex, WAIT_FOREVER);
     console_print ("%s: lock is taken\n", _name);
     console_print ("%s: going to free lock\n", _name);
     (void) mutex_unlock (mutex);
