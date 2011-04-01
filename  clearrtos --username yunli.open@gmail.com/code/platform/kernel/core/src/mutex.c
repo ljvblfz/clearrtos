@@ -72,7 +72,7 @@ static bool mutex_callback_unlock (sync_object_handler_t _handler,
     task_handler_t p_task = task_self ();
 
     // grab the mutex
-    if (is_in_interrupt () || is_invalid_task (task_self ())) {
+    if (is_in_interrupt () || is_invalid_task (p_task)) {
         return ERROR_T (ERROR_MUTEX_INVCONTEXT);
     }
     if (p_mutex->owner_ != p_task) {
