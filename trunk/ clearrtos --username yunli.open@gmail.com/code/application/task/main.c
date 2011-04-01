@@ -29,7 +29,7 @@
 
 static void task_entry_overflow (const char _name [], void *_p_arg)
 {
-    // create a BIG stack variable for simulating stack overflow
+    // create a BIG local variable for simulating stack overflow
     int buffer [900];
     memset (buffer, 0, sizeof (buffer));
          
