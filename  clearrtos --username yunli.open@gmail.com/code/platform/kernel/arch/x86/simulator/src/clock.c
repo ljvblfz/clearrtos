@@ -70,13 +70,14 @@ static error_t clock_control (device_handler_t _handler,
         {
             struct itimerval tv;
             
+            //lint -e{611}
+            handler->tick_process_ = (interrupt_handler_t) _ptr_arg;
+            
             tv.it_value.tv_sec = 0;
             tv.it_value.tv_usec = (long) _int_arg*1000; // msec to usec
             tv.it_interval.tv_sec = 0;
             tv.it_interval.tv_usec = (long) _int_arg*1000; // msec to usec
             (void) setitimer (ITIMER_REAL, &tv, 0);
-            //lint -e{611}
-            handler->tick_process_ = (interrupt_handler_t) _ptr_arg;
 
             interrupt_enable (_handler->interrupt_vector_);
         }

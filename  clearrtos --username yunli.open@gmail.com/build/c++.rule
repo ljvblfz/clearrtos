@@ -43,21 +43,21 @@ ifeq ("$(MAKECMDGOALS)", "release")
 DIR_OBJS = robjs
 AR = ar
 CXX = g++
-CXXFLAGS += -g -O2
+CXXFLAGS += -gdwarf-2 -g3 -O2
 endif
 
 ifeq ("$(MAKECMDGOALS)", "debug")
 DIR_OBJS = dobjs
 AR = ar
 CXX = g++
-CXXFLAGS += -g3
+CXXFLAGS += -gdwarf-2 -g3
 endif
 
 ifeq ("$(MAKECMDGOALS)", "unitest")
 DIR_OBJS = uobjs
 AR = ar
 CXX = g++
-CXXFLAGS += -g3 -DUNITEST -fprofile-arcs -ftest-coverage
+CXXFLAGS += -gdwarf-2 -g3 -DUNITEST -fprofile-arcs -ftest-coverage
 LINK_LIBS += gcov
 endif
 
