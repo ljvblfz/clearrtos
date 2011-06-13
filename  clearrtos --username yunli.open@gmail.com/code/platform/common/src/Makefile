@@ -29,6 +29,6 @@ $(DIR_OBJS)/error.dep: genmark
 # for cleaning the errstr.def and genmark files
 RMS += errstr.def genmark
 
-genmark: $(ERROR_FILES)
+genmark: $(DIR_TARGET)/err2str.exe $(ERROR_FILES)
 	$(DIR_TARGET)/err2str.exe $(ERROR_FILES) > errstr.def
 	@touch genmark
