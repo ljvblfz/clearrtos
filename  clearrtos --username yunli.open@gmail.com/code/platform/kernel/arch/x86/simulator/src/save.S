@@ -35,18 +35,18 @@ context_save:
     movl FRAME_OFFSET_PARAM0(%esp), %edx
 
     // save local variable registers into _p_context
-    movl %ebx, (CONTEXT_OFFSET_EBX*4)(%edx)
-    movl %esi, (CONTEXT_OFFSET_ESI*4)(%edx)
-    movl %edi, (CONTEXT_OFFSET_EDI*4)(%edx)
+    movl %ebx, (CONTEXT_OFFSET_EBX)(%edx)
+    movl %esi, (CONTEXT_OFFSET_ESI)(%edx)
+    movl %edi, (CONTEXT_OFFSET_EDI)(%edx)
     
     // save stack corresponding registers into _p_context
     leal FRAME_OFFSET_PARAM0(%esp), %ecx
-    movl %ecx, (CONTEXT_OFFSET_ESP*4)(%edx)
-    movl %ebp, (CONTEXT_OFFSET_EBP*4)(%edx)
+    movl %ecx, (CONTEXT_OFFSET_ESP)(%edx)
+    movl %ebp, (CONTEXT_OFFSET_EBP)(%edx)
     
     // save PC into _p_context
     movl FRAME_OFFSET_PC(%esp), %ecx
-    movl %ecx, (CONTEXT_OFFSET_EIP*4)(%edx)
+    movl %ecx, (CONTEXT_OFFSET_EIP)(%edx)
     
 	// return 0 to indicate a return from context_save ()
     xorl %eax, %eax

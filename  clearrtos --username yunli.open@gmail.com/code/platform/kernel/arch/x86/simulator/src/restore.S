@@ -38,12 +38,12 @@ context_restore:
 	movl FRAME_OFFSET_PARAM1(%esp), %eax
 	
 	// restore registers from context
-	movl (CONTEXT_OFFSET_EIP*4)(%ecx), %edx
-	movl (CONTEXT_OFFSET_EBX*4)(%ecx), %ebx
-	movl (CONTEXT_OFFSET_ESI*4)(%ecx), %esi
-	movl (CONTEXT_OFFSET_EDI*4)(%ecx), %edi
-	movl (CONTEXT_OFFSET_EBP*4)(%ecx), %ebp
-	movl (CONTEXT_OFFSET_ESP*4)(%ecx), %esp
+	movl (CONTEXT_OFFSET_EIP)(%ecx), %edx
+	movl (CONTEXT_OFFSET_EBX)(%ecx), %ebx
+	movl (CONTEXT_OFFSET_ESI)(%ecx), %esi
+	movl (CONTEXT_OFFSET_EDI)(%ecx), %edi
+	movl (CONTEXT_OFFSET_EBP)(%ecx), %ebp
+	movl (CONTEXT_OFFSET_ESP)(%ecx), %esp
 	
 	// jump to context_save ()
     jmp *%edx
