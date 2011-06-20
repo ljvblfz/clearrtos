@@ -33,11 +33,11 @@
 
 // offset for registers of context
 #define CONTEXT_OFFSET_EBX      0
-#define CONTEXT_OFFSET_ESI      1
-#define CONTEXT_OFFSET_EDI      2
-#define CONTEXT_OFFSET_EBP      3
-#define CONTEXT_OFFSET_ESP      4
-#define CONTEXT_OFFSET_EIP      5
+#define CONTEXT_OFFSET_ESI      4
+#define CONTEXT_OFFSET_EDI      8
+#define CONTEXT_OFFSET_EBP      12
+#define CONTEXT_OFFSET_ESP      16
+#define CONTEXT_OFFSET_EIP      20
 
 #endif
 
