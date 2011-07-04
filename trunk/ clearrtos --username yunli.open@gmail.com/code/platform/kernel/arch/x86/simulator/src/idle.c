@@ -40,10 +40,6 @@ void task_entry_idle (const char _name [], void *_p_arg)
     UNUSED (_name);
     UNUSED (_p_arg);
 
-    // idle task is the first running task, we need to reschedule again before
-    // the while loop to switch to the highest priority task for running
-    task_schedule (null);
-
     //lint -e{716}
     while (1) {
         if (select (0, 0, 0, 0, 0) < 0) {

@@ -28,7 +28,8 @@
 
 //lint -e123 -esym(752, _root_context_init) -esym(754, old_esp_)
 
-#define CPU_STACK_ALIGNMENT     16
+#define CPU_STACK_ALIGNMENT     4
+#define BOTTOM_MAGIC_NUMBER     0xDEADDEAD
 
 #define weak_alias(name, aliasname) _weak_alias (name, aliasname)
 #define _weak_alias(name, aliasname) \
@@ -83,9 +84,9 @@ void context_init (task_context_t *_p_context, address_t _stack_base,
     stack_high &= ~(CPU_STACK_ALIGNMENT - 1);
 
     p_frame = (root_frame_t *)(stack_high - sizeof (root_frame_t));
-    p_frame->ebx_ = (register_t) 0xDEADDEAD;
-    p_frame->esi_ = (register_t) 0xDEADDEAD;
-    p_frame->edi_ = (register_t) 0xDEADDEAD;
+    p_frame->ebx_ = (register_t) BOTTOM_MAGIC_NUMBER;
+    p_frame->esi_ = (register_t) BOTTOM_MAGIC_NUMBER;
+    p_frame->edi_ = (register_t) BOTTOM_MAGIC_NUMBER;
     p_frame->eip_ = (register_t) _task_entry;
     //lint -e{545}
     p_frame->p_context_ = _p_context;
