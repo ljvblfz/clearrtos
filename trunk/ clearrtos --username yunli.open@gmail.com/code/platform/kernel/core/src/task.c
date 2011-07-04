@@ -68,8 +68,7 @@ static task_statistic_t g_statistics;
 
 static task_handler_t g_task_running;
 static task_handler_t g_task_idle;
-// saves context for C main () function 
-static task_context_t g_main_context;
+static task_context_t g_start_context;
 
 static bool g_multitasking_started;
 
@@ -326,7 +325,7 @@ void multitasking_start ()
         console_print ("Error: cannot start tick device");
     }
     
-    context_switch (&g_main_context, &g_task_running->context_);
+    context_switch (&g_start_context, &g_task_running->context_);
 }
 
 void multitasking_stop ()
@@ -348,7 +347,7 @@ void multitasking_stop ()
         console_print ("Error: cannot close tick device");
     }
     
-    context_switch (&g_task_running->context_, &g_main_context);
+    context_switch (&g_task_running->context_, &g_start_context);
 }
 
 error_t task_create (task_handler_t *_p_handler, const char _name [], 
