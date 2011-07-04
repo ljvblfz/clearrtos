@@ -164,10 +164,10 @@ error_t task_state_change (task_handler_t _handler, task_state_t _new_state)
         break;
     case TASK_STATE_WAITING:
         {
-            if (_handler->timeout_ != WAIT_FOREVER) {
+            if (_handler->timeout_ != 0) {
                 (void) timer_start (_handler->timer_, _handler->timeout_, 
                     task_timer_callback, _handler);
-                _handler->timeout_ = WAIT_FOREVER;
+                _handler->timeout_ = 0;
             }
             task_bitmap_bit_clear (&g_ready_bitmap, _handler->priority_);
         }
@@ -311,10 +311,7 @@ void multitasking_start ()
         return;
     }
     g_multitasking_started = true;
-    // take idle task as the first running task, the idle task will schedule
-    // again to pick up the highest priority to run.
-    g_task_running = g_task_idle;
-    // update statistics
+    g_task_running = g_priority_map [task_bitmap_lowest_bit_get (&g_ready_bitmap)];
     g_task_running->stats_scheduled_ ++;
     g_statistics.scheduled_ ++;
     interrupt_exit_callback_install (task_schedule_in_interrupt);
@@ -386,7 +383,7 @@ error_t task_create (task_handler_t *_p_handler, const char _name [],
         strncpy (handler->name_, _name, (usize_t)sizeof (handler->name_) - 1);
         handler->name_ [sizeof (handler->name_) - 1] = 0;
     }
-    handler->timeout_ = WAIT_FOREVER;
+    handler->timeout_ = 0;
     handler->priority_ = _priority;
     handler->stack_base_ = ((address_t)_stack_base + (STACK_WIDTH_IN_BYTES - 1)) &
         (~(STACK_WIDTH_IN_BYTES - 1));
