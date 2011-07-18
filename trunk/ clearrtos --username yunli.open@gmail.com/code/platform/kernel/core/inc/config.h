@@ -73,7 +73,7 @@ typedef unsigned int stack_unit_t;
 #define CONFIG_TIMER_TASK_STACK_SIZE        2048
 #define CONFIG_TIMER_TASK_PRIORITY          8
 #define CONFIG_TIMER_QUEUE_SIZE             1024
-#define CONFIG_INTERRUPT_FLASH_FREQUENCY    2
+#define CONFIG_INTERRUPT_FLASH_FREQUENCY    16
 
 #endif
 
