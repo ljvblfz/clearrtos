@@ -170,7 +170,7 @@ dll_node_t *dll_traverse (dll_t *_p_dll, traverse_callback_t _cb, void *_p_arg)
     return p_node;
 }
 
-dll_node_t *dll_traverse_reversely (dll_t *_p_dll, traverse_callback_t _cb, 
+dll_node_t *dll_rtraverse (dll_t *_p_dll, traverse_callback_t _cb, 
     void *_p_arg)
 {
     register dll_node_t *p_node = _p_dll->tail_;

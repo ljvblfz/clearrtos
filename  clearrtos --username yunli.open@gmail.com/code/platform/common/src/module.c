@@ -161,15 +161,15 @@ void system_down ()
     
     g_state = STATE_DOWN;
     for (level = LEVEL_LAST; level > LEVEL_FIRST; -- level) {
-        (void) dll_traverse_reversely (&g_levels [level], down_for_each, null);
+        (void) dll_rtraverse (&g_levels [level], down_for_each, null);
     }
-    (void) dll_traverse_reversely (&g_levels [LEVEL_FIRST], down_for_each, null);
+    (void) dll_rtraverse (&g_levels [LEVEL_FIRST], down_for_each, null);
     
     g_state = STATE_DESTROYING;
     for (level = LEVEL_LAST; level > LEVEL_FIRST; -- level) {
-        (void) dll_traverse_reversely (&g_levels [level], destroy_for_each, null);
+        (void) dll_rtraverse (&g_levels [level], destroy_for_each, null);
     }
-    (void) dll_traverse_reversely (&g_levels [LEVEL_FIRST], destroy_for_each, null);
+    (void) dll_rtraverse (&g_levels [LEVEL_FIRST], destroy_for_each, null);
 }
 
 system_state_t system_state ()

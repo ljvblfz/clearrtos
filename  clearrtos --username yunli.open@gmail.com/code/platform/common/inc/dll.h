@@ -93,7 +93,7 @@ dll_node_t *dll_pop_head (dll_t *_p_dll);
 dll_node_t *dll_pop_tail (dll_t *_p_dll);
 void dll_remove (dll_t *_p_dll, const dll_node_t *_p_node);
 dll_node_t *dll_traverse (dll_t *_p_dll, traverse_callback_t _cb, void *_p_arg);
-dll_node_t *dll_traverse_reversely (dll_t *_p_dll, traverse_callback_t _cb, 
+dll_node_t *dll_rtraverse (dll_t *_p_dll, traverse_callback_t _cb, 
     void *_p_arg);
 void dll_merge (dll_t *_p_to, dll_t *_p_from);
 void dll_split (dll_t *_p_orig, dll_t *_p_derived, dll_node_t *_p_breakpoint, 
