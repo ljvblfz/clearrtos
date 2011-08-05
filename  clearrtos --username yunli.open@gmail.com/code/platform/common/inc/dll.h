@@ -91,7 +91,7 @@ void dll_push_head (dll_t *_p_dll, dll_node_t *_p_node);
 void dll_push_tail (dll_t *_p_dll, dll_node_t *_p_node);
 dll_node_t *dll_pop_head (dll_t *_p_dll);
 dll_node_t *dll_pop_tail (dll_t *_p_dll);
-void dll_remove (dll_t *_p_dll, const dll_node_t *_p_node);
+void dll_remove (dll_t *_p_dll, dll_node_t *_p_node);
 dll_node_t *dll_traverse (dll_t *_p_dll, traverse_callback_t _cb, void *_p_arg);
 dll_node_t *dll_rtraverse (dll_t *_p_dll, traverse_callback_t _cb, 
     void *_p_arg);

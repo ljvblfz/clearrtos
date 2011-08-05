@@ -100,19 +100,15 @@ dll_node_t *dll_pop_head (dll_t *_p_dll)
 {
     dll_node_t *p_node = _p_dll->head_;
 
-    if (p_node != 0) {
-        _p_dll->count_--;
-        _p_dll->head_ = p_node->next_;
-        if (0 == _p_dll->head_) {
-            _p_dll->tail_ = 0;
-        }
-        else {
-            p_node->next_->prev_ = 0;
-        }
-        p_node->next_ = 0;
-        p_node->prev_ = 0;
+    if (0 == p_node) {
+        return 0;
     }
     
+    _p_dll->count_--;
+    _p_dll->head_ = p_node->next_;
+    (0 == _p_dll->head_) ?
+        (_p_dll->tail_ = 0) : (p_node->next_->prev_ = 0);
+    p_node->next_ = p_node->prev_ = 0;
     return p_node;
 }
 
@@ -120,38 +116,29 @@ dll_node_t *dll_pop_tail (dll_t *_p_dll)
 {
     dll_node_t *p_node = _p_dll->tail_;
 
-    if (p_node != 0) {
-        _p_dll->count_ --;
-        _p_dll->tail_ = p_node->prev_;
-        if (0 == _p_dll->tail_) {
-            _p_dll->head_ = 0;
-        }
-        else {
-            p_node->prev_->next_ = 0;
-        }
-        p_node->next_ = 0;
-        p_node->prev_ = 0;
+    if (0 == p_node) {
+        return 0;
     }
     
+    _p_dll->count_ --;
+    _p_dll->tail_ = p_node->prev_;
+    (0 == _p_dll->tail_) ?
+        (_p_dll->head_ = 0) : (p_node->prev_->next_ = 0);
+    p_node->next_ = p_node->prev_ = 0;
     return p_node;
 }
 
-void dll_remove (dll_t *_p_dll, const dll_node_t *_p_node)
+void dll_remove (dll_t *_p_dll, dll_node_t *_p_node)
 {
-    if (0 == _p_node->prev_) {
-        _p_dll->head_ = _p_node->next_;
+    if (_p_node->prev_ == 0 && _p_node->next_ == 0) {
+        return;
     }
-    else {
-        _p_node->prev_->next_ = _p_node->next_;
-    }
-
-    if (0 == _p_node->next_) {
-        _p_dll->tail_ = _p_node->prev_;
-    }
-    else {
-        _p_node->next_->prev_ = _p_node->prev_;
-    }
-
+    
+    (0 == _p_node->prev_) ? 
+        (_p_dll->head_ = _p_node->next_) : (_p_node->prev_->next_ = _p_node->next_);
+    (0 == _p_node->next_) ?
+        (_p_dll->tail_ = _p_node->prev_) : (_p_node->next_->prev_ = _p_node->prev_);
+    _p_node->prev_ = _p_node->next_ = 0;
     _p_dll->count_--;
 }
 
