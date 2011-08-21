@@ -130,10 +130,6 @@ dll_node_t *dll_pop_tail (dll_t *_p_dll)
 
 void dll_remove (dll_t *_p_dll, dll_node_t *_p_node)
 {
-    if (_p_node->prev_ == 0 && _p_node->next_ == 0) {
-        return;
-    }
-    
     (0 == _p_node->prev_) ? 
         (_p_dll->head_ = _p_node->next_) : (_p_node->prev_->next_ = _p_node->next_);
     (0 == _p_node->next_) ?
