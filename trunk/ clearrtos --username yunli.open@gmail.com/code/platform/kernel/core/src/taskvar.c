@@ -58,7 +58,7 @@ static bool task_variable_restore (dll_t *_p_dll, dll_node_t *_p_node, void *_p_
     return true;
 }
 
-static void task_variable_switch_hook (task_handler_t _from, task_handler_t _to)
+static void task_variable_switch_hook (task_handle_t _from, task_handle_t _to)
 {
     (void) dll_traverse (&_from->variable_, task_variable_store, 0);
     (void) dll_traverse (&_to->variable_, task_variable_restore, 0);
@@ -79,10 +79,10 @@ error_t task_variable_add (value_t *_p_value)
     interrupt_level_t level;
     static bool initialized = false;
     task_variable_node_t *p_node;
-    task_handler_t handler = task_self ();
+    task_handle_t handle = task_self ();
 
     level = global_interrupt_disable ();
-    if (is_invalid_task (handler) || is_in_interrupt ()) {
+    if (is_invalid_task (handle) || is_in_interrupt ()) {
         global_interrupt_enable (level);
         return ERROR_T (ERROR_TASK_VARIABLE_ADD_INVTASK);
     }
@@ -101,7 +101,7 @@ error_t task_variable_add (value_t *_p_value)
         return ERROR_T (ERROR_TASK_VARIABLE_ADD_NOVAR);
     }
     p_node->address_ = (address_t)_p_value;
-    dll_push_tail (&handler->variable_, &p_node->node_);
+    dll_push_tail (&handle->variable_, &p_node->node_);
     global_interrupt_enable (level);
     return 0;
 }
@@ -122,20 +122,20 @@ error_t task_variable_remove (value_t *_p_value)
 {
     interrupt_level_t level;
     task_variable_node_t *p_node;
-    task_handler_t handler = task_self ();
+    task_handle_t handle = task_self ();
 
     level = global_interrupt_disable ();
-    if (is_invalid_task (handler) || is_in_interrupt ()) {
+    if (is_invalid_task (handle) || is_in_interrupt ()) {
         global_interrupt_enable (level);
         return ERROR_T (ERROR_TASK_VARIABLE_REMOVE_INVTASK);
     }
-    p_node = (task_variable_node_t *)dll_traverse (&handler->variable_,
+    p_node = (task_variable_node_t *)dll_traverse (&handle->variable_,
         task_variable_find, _p_value);
     if (null == p_node) {
         global_interrupt_enable (level);
         return ERROR_T (ERROR_TASK_VARIABLE_REMOVE_NOTFOUND);
     }
-    dll_remove (&handler->variable_, &p_node->node_);
+    dll_remove (&handle->variable_, &p_node->node_);
     dll_push_tail (&g_variable_free, &p_node->node_);
     global_interrupt_enable (level);
     return 0;

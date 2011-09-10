@@ -32,32 +32,32 @@
 #include "clib.h"
 #include "interrupt.h"
 
-static error_t console_open (device_handler_t _handler, open_mode_t _mode)
+static error_t console_open (device_handle_t _handle, open_mode_t _mode)
 {
-    console_handler_t handler = (console_handler_t)_handler;
+    console_handle_t handle = (console_handle_t)_handle;
 
     UNUSED (_mode);
     
-    if (handler->is_opened_) {
+    if (handle->is_opened_) {
         return ERROR_T (ERROR_CONSOLE_OPEN_OPENED);
     }
 
-    handler->is_opened_ = true;
+    handle->is_opened_ = true;
     return 0;
 }
 
-static error_t console_close (device_handler_t _handler)
+static error_t console_close (device_handle_t _handle)
 {
-    console_handler_t handler = (console_handler_t)_handler;
+    console_handle_t handle = (console_handle_t)_handle;
 
-    handler->is_opened_ = false;
+    handle->is_opened_ = false;
     return 0;
 }
 
-static error_t console_write (device_handler_t _handler, const void *_buf, 
+static error_t console_write (device_handle_t _handle, const void *_buf, 
     usize_t _size)
 {
-    UNUSED (_handler);
+    UNUSED (_handle);
     
     // write to the STDOUT for simulating a Console
     write (0, _buf, _size);
@@ -77,18 +77,18 @@ error_t console_driver_install (const char _name[])
     return driver_install (_name, &opt, 0);
 }
 
-error_t console_device_register (const char _name [], console_handler_t _handler)
+error_t console_device_register (const char _name [], console_handle_t _handle)
 {
-    _handler->common_.interrupt_vector_ = INTERRUPT_NONE;
-    _handler->is_opened_ = false;
-    return device_register (_name, &_handler->common_);
+    _handle->common_.interrupt_vector_ = INTERRUPT_NONE;
+    _handle->is_opened_ = false;
+    return device_register (_name, &_handle->common_);
 }
 
-static device_handler_t g_console_handler;
+static device_handle_t g_console_handle;
 
-void console_handler_set (device_handler_t _handler)
+void console_handle_set (device_handle_t _handle)
 {
-    g_console_handler = _handler;
+    g_console_handle = _handle;
 }
 
 void console_print (const char* _format, ...)
@@ -101,11 +101,11 @@ void console_print (const char* _format, ...)
     va_start (arglist, _format);
     length = vsnprintf (buffer, sizeof (buffer) - 1, _format, arglist);
     va_end (arglist);
-    if (0 == g_console_handler) {
+    if (0 == g_console_handle) {
         log_lost ++;
     }
     else {
-        (void) device_write (g_console_handler, buffer, (usize_t)length);
+        (void) device_write (g_console_handle, buffer, (usize_t)length);
         // log out a meesage to notify that there is log lost
         if (log_lost != 0) {
             length = snprintf (buffer, sizeof (buffer) - 1, "Warning: there"

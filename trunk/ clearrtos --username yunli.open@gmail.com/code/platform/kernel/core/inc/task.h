@@ -39,14 +39,14 @@ typedef u32_t task_priority_t;
 #define __task_priority_defined__
 #endif
 
-#ifndef __task_handler_defined__
+#ifndef __task_handle_defined__
 struct type_task;
-typedef struct type_task task_t, *task_handler_t;
-#define __task_handler_defined__
+typedef struct type_task task_t, *task_handle_t;
+#define __task_handle_defined__
 #endif
 
 #ifndef __event_set_defined__
-typedef u32_t event_set_t, *event_set_handler_t;
+typedef u32_t event_set_t, *event_set_handle_t;
 #define __event_set_defined__
 #endif
 
@@ -56,7 +56,7 @@ typedef enum type_event_option event_option_t;
 #endif
 
 typedef void (*task_entry_t) (const char _name [], void *_p_arg);
-typedef void (*preschedule_callback_t) (task_handler_t _from, task_handler_t _to);
+typedef void (*preschedule_callback_t) (task_handle_t _from, task_handle_t _to);
 
 #define STACK_DECLARE(_name, _size) static stack_unit_t _name [_size]
 
@@ -78,7 +78,7 @@ struct type_task {
     
     task_context_t context_;
     task_state_t state_;
-    timer_handler_t timer_;
+    timer_handle_t timer_;
     msecond_t timeout_;
     error_t ecode_;
 
@@ -113,17 +113,17 @@ void multitasking_start ();
 void multitasking_stop ();
 
 // for task control
-error_t task_create (task_handler_t *_p_handler, const char _name [], 
+error_t task_create (task_handle_t *_p_handle, const char _name [], 
     task_priority_t _priority, stack_unit_t *_stack_base, usize_t _stack_bytes);
-error_t task_delete (task_handler_t _handler);
-error_t task_start (task_handler_t _handler, task_entry_t _entry, void *_p_arg);
-error_t task_suspend (task_handler_t _handler);
-error_t task_resume (task_handler_t _handler);
+error_t task_delete (task_handle_t _handle);
+error_t task_start (task_handle_t _handle, task_entry_t _entry, void *_p_arg);
+error_t task_suspend (task_handle_t _handle);
+error_t task_resume (task_handle_t _handle);
 error_t task_sleep (msecond_t _duration);
-task_handler_t task_self ();
-task_handler_t task_from_priority (task_priority_t _priority);
-error_t is_stack_overflowed (const task_handler_t _handler, bool *_p_overflowed);
-error_t stack_used_percentage (const task_handler_t _handler, int *_p_percentage);
+task_handle_t task_self ();
+task_handle_t task_from_priority (task_priority_t _priority);
+error_t is_stack_overflowed (const task_handle_t _handle, bool *_p_overflowed);
+error_t stack_used_percentage (const task_handle_t _handle, int *_p_percentage);
 void task_dump ();
 
 void scheduler_lock ();
@@ -131,10 +131,10 @@ void scheduler_unlock ();
 
 // below functions should ONLY be called by semphore, mutex or event module
 // rather then by application
-bool is_invalid_task (const task_handler_t _handler);
-error_t task_state_change (task_handler_t _handler, task_state_t _new_state);
+bool is_invalid_task (const task_handle_t _handle);
+error_t task_state_change (task_handle_t _handle, task_state_t _new_state);
 void task_schedule (preschedule_callback_t _callback);
-void task_priority_change (task_handler_t _handler, task_priority_t _to);
+void task_priority_change (task_handle_t _handle, task_priority_t _to);
 
 #ifdef UNITEST
 dll_t *unitest_get_allocated_dll ();

@@ -30,7 +30,7 @@
 
 static void task_consumer (const char _name [], void *_p_arg)
 {
-    semaphore_handler_t semaphore = (semaphore_handler_t)_p_arg;
+    semaphore_handle_t semaphore = (semaphore_handle_t)_p_arg;
 
     console_print ("%s: going to take semaphore\n", _name);
     (void) semaphore_take (semaphore, WAIT_FOREVER);
@@ -39,7 +39,7 @@ static void task_consumer (const char _name [], void *_p_arg)
 
 static void task_producer (const char _name [], void *_p_arg)
 {
-    semaphore_handler_t semaphore = (semaphore_handler_t)_p_arg;
+    semaphore_handle_t semaphore = (semaphore_handle_t)_p_arg;
 
     console_print ("%s: going to give semaphore\n", _name);
     (void) semaphore_give (semaphore);
@@ -54,12 +54,12 @@ static void task_producer (const char _name [], void *_p_arg)
     
 error_t module_testapp (system_state_t _state)
 {
-    static task_handler_t producer;
-    static task_handler_t consumer;
+    static task_handle_t producer;
+    static task_handle_t consumer;
     STACK_DECLARE (stack_for_producer, 1024);
     STACK_DECLARE (stack_for_consumer, 1024);
-    static semaphore_handler_t semaphore;
-    static device_handler_t ctrlc_handler;
+    static semaphore_handle_t semaphore;
+    static device_handle_t ctrlc_handle;
 
     if (STATE_INITIALIZING == _state) {
         (void) semaphore_create (&semaphore, "Test", 0);
@@ -72,10 +72,10 @@ error_t module_testapp (system_state_t _state)
             sizeof (stack_for_consumer));
         (void) task_start (consumer, task_consumer, semaphore);
         
-        (void) device_open (&ctrlc_handler, "/dev/ui/ctrlc", 0);
+        (void) device_open (&ctrlc_handle, "/dev/ui/ctrlc", 0);
     }
     else if (STATE_DESTROYING == _state) {
-        (void) device_close (ctrlc_handler);
+        (void) device_close (ctrlc_handle);
         (void) task_delete (consumer);
         (void) task_delete (producer);
         (void) semaphore_delete (semaphore);

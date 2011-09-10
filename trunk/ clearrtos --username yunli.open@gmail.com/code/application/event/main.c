@@ -31,9 +31,9 @@
 #define EVENT_1   0x01
 #define EVENT_2   0x02
 
-task_handler_t g_task1;
-task_handler_t g_task2;
-task_handler_t g_task3;
+task_handle_t g_task1;
+task_handle_t g_task2;
+task_handle_t g_task3;
 
 static void task_task1 (const char _name [], void *_p_arg)
 {
@@ -82,7 +82,7 @@ error_t module_testapp (system_state_t _state)
     STACK_DECLARE (stack_for_task1, 1024);
     STACK_DECLARE (stack_for_task2, 1024);
     STACK_DECLARE (stack_for_task3, 1024);
-    static device_handler_t ctrlc_handler;
+    static device_handle_t ctrlc_handle;
     
     if (STATE_INITIALIZING == _state) {
         (void) task_create (&g_task1, "Task1", 16, stack_for_task1, 
@@ -97,10 +97,10 @@ error_t module_testapp (system_state_t _state)
             sizeof (stack_for_task3));
         (void) task_start (g_task3, task_task3, 0);
         
-        (void) device_open (&ctrlc_handler, "/dev/ui/ctrlc", 0);
+        (void) device_open (&ctrlc_handle, "/dev/ui/ctrlc", 0);
     }
     else if (STATE_DESTROYING == _state) {
-        (void) device_close (ctrlc_handler);
+        (void) device_close (ctrlc_handle);
         (void) task_delete (g_task3);
         (void) task_delete (g_task2);
         (void) task_delete (g_task1);

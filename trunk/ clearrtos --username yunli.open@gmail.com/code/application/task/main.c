@@ -62,15 +62,15 @@ STACK_DECLARE (pad, 1024);
 STACK_DECLARE (g_stack_for_task0, 1024);
 STACK_DECLARE (g_stack_for_task1, 1024);
 STACK_DECLARE (g_stack_for_task2, 1024);
-static task_handler_t g_task0;
-static task_handler_t g_task1;
-static task_handler_t g_task2;
-static timer_handler_t g_timer;
-static device_handler_t g_ctrlc_handler;
+static task_handle_t g_task0;
+static task_handle_t g_task1;
+static task_handle_t g_task2;
+static timer_handle_t g_timer;
+static device_handle_t g_ctrlc_handle;
 
-static void timer_callback (timer_handler_t _handler, void *_arg)
+static void timer_callback (timer_handle_t _handle, void *_arg)
 {
-    UNUSED (_handler);
+    UNUSED (_handle);
     UNUSED (_arg);
 
     //lint -e{746}
@@ -97,10 +97,10 @@ error_t module_testapp (system_state_t _state)
         (void) timer_alloc (&g_timer, "Dump", TIMER_TYPE_TASK);
         (void) timer_start (g_timer, 5000, timer_callback, 0);
         
-        (void) device_open (&g_ctrlc_handler, "/dev/ui/ctrlc", 0);
+        (void) device_open (&g_ctrlc_handle, "/dev/ui/ctrlc", 0);
     }
     else if (STATE_DESTROYING == _state) {
-        (void) device_close (g_ctrlc_handler);
+        (void) device_close (g_ctrlc_handle);
         (void) timer_free (g_timer);
         (void) task_delete (g_task2);
         (void) task_delete (g_task1);

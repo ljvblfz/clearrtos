@@ -46,8 +46,8 @@
 #define STACK_WIDTH_SHIFT4BYTE  2
 #define MAGIC_NUMBER_STACK      0xDEAD5AA5L
 
-#define is_invalid_handler(_handler) (((_handler) == null) || \
-    ((_handler)->magic_number_ != MAGIC_NUMBER_TASK))
+#define is_invalid_handle(_handle) (((_handle) == null) || \
+    ((_handle)->magic_number_ != MAGIC_NUMBER_TASK))
 
 typedef struct {
     statistic_t scheduled_;
@@ -57,17 +57,17 @@ typedef struct {
 
 static task_t g_task_pool [TASK_PRIORITY_LEVELS];
 task_bitmap_t g_ready_bitmap;
-static task_handler_t g_priority_map [TASK_PRIORITY_LEVELS];
+static task_handle_t g_priority_map [TASK_PRIORITY_LEVELS];
 
-static device_handler_t g_tick_handler;
+static device_handle_t g_tick_handle;
 static int g_scheduler_locked_count;
 
 static dll_t g_allocated_task;
 
 static task_statistic_t g_statistics;
 
-static task_handler_t g_task_running;
-static task_handler_t g_task_idle;
+static task_handle_t g_task_running;
+static task_handle_t g_task_idle;
 static task_context_t g_start_context;
 
 static bool g_multitasking_started;
@@ -76,24 +76,24 @@ static bool g_multitasking_started;
 // by the user via task_start ()
 static void task_main ()
 {
-    task_handler_t handler = g_task_running;
+    task_handle_t handle = g_task_running;
 
     global_interrupt_enable (INTERRUPT_ENABLED);
     // the entry function should not return, otherwise, it means the task is
     // going to be exited
-    handler->entry_ (handler->name_, handler->argument_);
+    handle->entry_ (handle->name_, handle->argument_);
     // delete the task if the entry function returns, task_delete () could 
     // return an error code if this is the second time to delete it, so, always
     // ignore return value
-    (void) task_delete (handler);
+    (void) task_delete (handle);
 }
 
-static void task_timer_callback (timer_handler_t _handler, void *_arg)
+static void task_timer_callback (timer_handle_t _handle, void *_arg)
 {
-    task_handler_t p_task = (task_handler_t)_arg;
+    task_handle_t p_task = (task_handle_t)_arg;
     interrupt_level_t level;
     
-    UNUSED (_handler);
+    UNUSED (_handle);
     
     level = global_interrupt_disable ();
     if (TASK_STATE_WAITING == p_task->state_) {
@@ -103,11 +103,11 @@ static void task_timer_callback (timer_handler_t _handler, void *_arg)
     global_interrupt_enable (level);
 }
 
-error_t task_state_change (task_handler_t _handler, task_state_t _new_state)
+error_t task_state_change (task_handle_t _handle, task_state_t _new_state)
 {
     error_t ecode = 0;
 
-    if (_handler->state_ == _new_state) {
+    if (_handle->state_ == _new_state) {
         return 0;
     }
     
@@ -119,19 +119,19 @@ error_t task_state_change (task_handler_t _handler, task_state_t _new_state)
             char timer_name [NAME_MAX_LENGTH + 1] = TIMER_PREFIX;
             
             // initialize the stack with value of MAGIC_NUMBER_STACK
-            stack_unit_t *p_unit = (stack_unit_t *)_handler->stack_base_;
-            int count = _handler->stack_size_ >> STACK_WIDTH_SHIFT4BYTE;
+            stack_unit_t *p_unit = (stack_unit_t *)_handle->stack_base_;
+            int count = _handle->stack_size_ >> STACK_WIDTH_SHIFT4BYTE;
             
             while (count > 0) {
                 *p_unit ++ = MAGIC_NUMBER_STACK;
                 count --;
             }
-            context_init (&_handler->context_, _handler->stack_base_, 
-                _handler->stack_size_, (address_t) task_main);
-            strncpy (&timer_name [sizeof (TIMER_PREFIX)], _handler->name_, 
+            context_init (&_handle->context_, _handle->stack_base_, 
+                _handle->stack_size_, (address_t) task_main);
+            strncpy (&timer_name [sizeof (TIMER_PREFIX)], _handle->name_, 
                 sizeof (timer_name) - (sizeof (TIMER_PREFIX) + 1));
             timer_name [sizeof (timer_name) - 1] = 0;
-            ecode = timer_alloc (&_handler->timer_, timer_name, TIMER_TYPE_INTERRUPT);
+            ecode = timer_alloc (&_handle->timer_, timer_name, TIMER_TYPE_INTERRUPT);
             if (0 != ecode) {
                 return ecode;
             }
@@ -139,14 +139,14 @@ error_t task_state_change (task_handler_t _handler, task_state_t _new_state)
         break;
     case TASK_STATE_READY:
         {
-            if (TASK_STATE_RUNNING == _handler->state_) {
+            if (TASK_STATE_RUNNING == _handle->state_) {
                 break;
             }
-            if (timer_is_started (_handler->timer_)) {
-                (void) timer_stop (_handler->timer_, null);
+            if (timer_is_started (_handle->timer_)) {
+                (void) timer_stop (_handle->timer_, null);
             }
-            task_bitmap_bit_set (&g_ready_bitmap, _handler->priority_);
-            g_priority_map [_handler->priority_] = _handler;
+            task_bitmap_bit_set (&g_ready_bitmap, _handle->priority_);
+            g_priority_map [_handle->priority_] = _handle;
         }
         break;
     case TASK_STATE_RUNNING:
@@ -155,37 +155,37 @@ error_t task_state_change (task_handler_t _handler, task_state_t _new_state)
         break;
     case TASK_STATE_SUSPENDING:
         {
-            if (timer_is_started (_handler->timer_)) {
-                (void) timer_stop (_handler->timer_, &_handler->timeout_);
+            if (timer_is_started (_handle->timer_)) {
+                (void) timer_stop (_handle->timer_, &_handle->timeout_);
             }
-            task_bitmap_bit_clear (&g_ready_bitmap, _handler->priority_);
+            task_bitmap_bit_clear (&g_ready_bitmap, _handle->priority_);
         }
         break;
     case TASK_STATE_WAITING:
         {
-            if (_handler->timeout_ != 0) {
-                (void) timer_start (_handler->timer_, _handler->timeout_, 
-                    task_timer_callback, _handler);
-                _handler->timeout_ = 0;
+            if (_handle->timeout_ != 0) {
+                (void) timer_start (_handle->timer_, _handle->timeout_, 
+                    task_timer_callback, _handle);
+                _handle->timeout_ = 0;
             }
-            task_bitmap_bit_clear (&g_ready_bitmap, _handler->priority_);
+            task_bitmap_bit_clear (&g_ready_bitmap, _handle->priority_);
         }
         break;
     case TASK_STATE_DELETED:
         {
-            task_bitmap_bit_clear (&g_ready_bitmap, _handler->priority_);
-            (void) timer_free (_handler->timer_);
+            task_bitmap_bit_clear (&g_ready_bitmap, _handle->priority_);
+            (void) timer_free (_handle->timer_);
         }
         break;
     }
-    _handler->state_ = _new_state;
+    _handle->state_ = _new_state;
     return 0;
 }
 
 void task_schedule (preschedule_callback_t _callback)
 {
     interrupt_level_t level;
-    task_handler_t running, successor;
+    task_handle_t running, successor;
     bool overflowed = false;
 
     level = global_interrupt_disable ();
@@ -229,7 +229,7 @@ void task_schedule (preschedule_callback_t _callback)
 void task_schedule_in_interrupt ()
 {
     interrupt_level_t level;
-    task_handler_t running, successor;
+    task_handle_t running, successor;
     bool overflowed = false;
     
     level = global_interrupt_disable ();
@@ -275,12 +275,12 @@ void idle_task_spawn ()
 
 static bool task_check_for_each (dll_t *_p_dll, dll_node_t *_p_node, void *_p_arg)
 {
-    task_handler_t handler = (task_handler_t)_p_node;
+    task_handle_t handle = (task_handle_t)_p_node;
 
     UNUSED (_p_dll);
     UNUSED (_p_arg);
 
-    console_print ("Error: task \"%s\" isn't deleted\n", handler->name_);
+    console_print ("Error: task \"%s\" isn't deleted\n", handle->name_);
     return true;
 }
 
@@ -317,10 +317,10 @@ void multitasking_start ()
     global_interrupt_enable (level);
         
     // open and start the tick
-    if (device_open (&g_tick_handler, "/dev/clock/tick", 0) != 0) {
+    if (device_open (&g_tick_handle, "/dev/clock/tick", 0) != 0) {
         console_print ("Error: cannot open tick device");
     }
-    if (device_control (g_tick_handler, OPTION_TICK_START, 
+    if (device_control (g_tick_handle, OPTION_TICK_START, 
         (int)CONFIG_TICK_DURATION_IN_MSEC, tick_process) != 0) {
         console_print ("Error: cannot start tick device");
     }
@@ -340,20 +340,20 @@ void multitasking_stop ()
     g_multitasking_started = false;
     global_interrupt_enable (level);
     
-    if (device_control (g_tick_handler, OPTION_TICK_STOP, 0, 0) != 0) {
+    if (device_control (g_tick_handle, OPTION_TICK_STOP, 0, 0) != 0) {
         console_print ("Error: cannot stop tick device");
     }
-    if (device_close (g_tick_handler) != 0) {
+    if (device_close (g_tick_handle) != 0) {
         console_print ("Error: cannot close tick device");
     }
     
     context_switch (&g_task_running->context_, &g_start_context);
 }
 
-error_t task_create (task_handler_t *_p_handler, const char _name [], 
+error_t task_create (task_handle_t *_p_handle, const char _name [], 
     task_priority_t _priority, stack_unit_t *_stack_base, usize_t _stack_bytes)
 {
-    task_handler_t handler;
+    task_handle_t handle;
     interrupt_level_t level;
     error_t ecode;
     
@@ -364,43 +364,43 @@ error_t task_create (task_handler_t *_p_handler, const char _name [],
         return ERROR_T (ERROR_TASK_CREATE_INVPRIO);
     }
 
-    handler = &g_task_pool [_priority];
+    handle = &g_task_pool [_priority];
     
     level = global_interrupt_disable ();
-    if (MAGIC_NUMBER_TASK == handler->magic_number_) {
+    if (MAGIC_NUMBER_TASK == handle->magic_number_) {
         ecode = ERROR_T (ERROR_TASK_CREATE_PRIOINUSE);
         goto error;
     }
-    memset (handler, 0, sizeof (*handler));
-    handler->magic_number_ = MAGIC_NUMBER_TASK;
+    memset (handle, 0, sizeof (*handle));
+    handle->magic_number_ = MAGIC_NUMBER_TASK;
     global_interrupt_enable (level);
 
     if (0 == _name) {
-        handler->name_ [0] = 0;
+        handle->name_ [0] = 0;
     }
     else {
-        strncpy (handler->name_, _name, (usize_t)sizeof (handler->name_) - 1);
-        handler->name_ [sizeof (handler->name_) - 1] = 0;
+        strncpy (handle->name_, _name, (usize_t)sizeof (handle->name_) - 1);
+        handle->name_ [sizeof (handle->name_) - 1] = 0;
     }
-    handler->timeout_ = 0;
-    handler->priority_ = _priority;
-    handler->stack_base_ = ((address_t)_stack_base + (STACK_WIDTH_IN_BYTES - 1)) &
+    handle->timeout_ = 0;
+    handle->priority_ = _priority;
+    handle->stack_base_ = ((address_t)_stack_base + (STACK_WIDTH_IN_BYTES - 1)) &
         (~(STACK_WIDTH_IN_BYTES - 1));
-    handler->stack_size_ = _stack_bytes - (handler->stack_base_ - 
+    handle->stack_size_ = _stack_bytes - (handle->stack_base_ - 
         (address_t)_stack_base);
-    handler->stack_size_ &= ~(STACK_WIDTH_IN_BYTES - 1);
+    handle->stack_size_ &= ~(STACK_WIDTH_IN_BYTES - 1);
     
     level = global_interrupt_disable ();
-    ecode = task_state_change (handler, TASK_STATE_CREATED);
+    ecode = task_state_change (handle, TASK_STATE_CREATED);
     if (0 != ecode) {
-        handler->magic_number_ = 0;
+        handle->magic_number_ = 0;
         goto error;
     }
-    dll_push_tail (&g_allocated_task, &handler->node_);
-    task_create_hook_traverse (handler);
+    dll_push_tail (&g_allocated_task, &handle->node_);
+    task_create_hook_traverse (handle);
     global_interrupt_enable (level);
 
-    *_p_handler = handler;
+    *_p_handle = handle;
     return 0;
     
 error:
@@ -408,7 +408,7 @@ error:
     return ecode;
 }
 
-error_t task_delete (task_handler_t _handler)
+error_t task_delete (task_handle_t _handle)
 {
     interrupt_level_t level;
     bool schedule_needed = false;
@@ -418,20 +418,20 @@ error_t task_delete (task_handler_t _handler)
         return ERROR_T (ERROR_TASK_DELETE_INVCONTEXT);
     }
     level = global_interrupt_disable ();
-    if (is_invalid_handler (_handler)) {
+    if (is_invalid_handle (_handle)) {
         ecode = ERROR_T (ERROR_TASK_DELETE_INVHANDLER);
         goto error;
     }
-    ecode = task_state_change (_handler, TASK_STATE_DELETED);
+    ecode = task_state_change (_handle, TASK_STATE_DELETED);
     if (0 != ecode) {
         goto error;
     }
-    _handler->magic_number_ = 0;
-    if (_handler == g_task_running) {
+    _handle->magic_number_ = 0;
+    if (_handle == g_task_running) {
         schedule_needed = true;
     }
-    dll_remove (&g_allocated_task, &_handler->node_);
-    task_delete_hook_traverse (_handler);
+    dll_remove (&g_allocated_task, &_handle->node_);
+    task_delete_hook_traverse (_handle);
     global_interrupt_enable (level);
     
     // only task deleting itself needs a re-schedule, if a task is deleted
@@ -447,23 +447,23 @@ error_t task_delete (task_handler_t _handler)
     return ecode;
 }
 
-error_t task_start (task_handler_t _handler, task_entry_t _entry, void *_p_arg)
+error_t task_start (task_handle_t _handle, task_entry_t _entry, void *_p_arg)
 {
     interrupt_level_t level;
     error_t ecode;
 
     level = global_interrupt_disable ();
-    if (is_invalid_handler (_handler)) {
+    if (is_invalid_handle (_handle)) {
         ecode = ERROR_T (ERROR_TASK_START_INVHANDLER);
         goto error;
     }
-    if (TASK_STATE_CREATED != _handler->state_) {
+    if (TASK_STATE_CREATED != _handle->state_) {
         ecode = ERROR_T (ERROR_TASK_START_INVOP);
         goto error;
     }
-    _handler->entry_ = _entry;
-    _handler->argument_ = _p_arg;
-    (void) task_state_change (_handler, TASK_STATE_READY);
+    _handle->entry_ = _entry;
+    _handle->argument_ = _p_arg;
+    (void) task_state_change (_handle, TASK_STATE_READY);
     global_interrupt_enable (level);
     
     task_schedule (null);
@@ -474,27 +474,27 @@ error:
     return ecode;
 }
 
-error_t task_suspend (task_handler_t _handler)
+error_t task_suspend (task_handle_t _handle)
 {
     interrupt_level_t level;
     bool schedule_needed = false;
     error_t ecode;
 
     level = global_interrupt_disable ();
-    if (is_invalid_handler (_handler)) {
+    if (is_invalid_handle (_handle)) {
         ecode = ERROR_T (ERROR_TASK_SUSPEND_INVHANDLER);
         goto error;
     }
-    if (TASK_STATE_CREATED == _handler->state_) {
+    if (TASK_STATE_CREATED == _handle->state_) {
         ecode = ERROR_T (ERROR_TASK_SUSPEND_NOTSTARTED);
         goto error;
     }
     
-    ecode = task_state_change (_handler, TASK_STATE_SUSPENDING);
+    ecode = task_state_change (_handle, TASK_STATE_SUSPENDING);
     if (0 != ecode) {
         goto error;
     }
-    if (_handler == g_task_running) {
+    if (_handle == g_task_running) {
         schedule_needed = true;
     }
     global_interrupt_enable (level);
@@ -511,25 +511,25 @@ error:
     return ecode;
 }
 
-error_t task_resume (task_handler_t _handler)
+error_t task_resume (task_handle_t _handle)
 {
     interrupt_level_t level;
     error_t ecode;
 
     level = global_interrupt_disable ();
-    if (is_invalid_handler (_handler)) {
+    if (is_invalid_handle (_handle)) {
         ecode = ERROR_T (ERROR_TASK_RESUME_INVHANDLER);
         goto error;
     }
-    if (TASK_STATE_SUSPENDING != _handler->state_) {
+    if (TASK_STATE_SUSPENDING != _handle->state_) {
         ecode = ERROR_T (ERROR_TASK_RESUME_NOTSUSPENDED);
         goto error;
     }
-    if (0 == _handler->timeout_) {
-        (void) task_state_change (_handler, TASK_STATE_READY);
+    if (0 == _handle->timeout_) {
+        (void) task_state_change (_handle, TASK_STATE_READY);
     }
     else {
-        (void) task_state_change (_handler, TASK_STATE_WAITING);
+        (void) task_state_change (_handle, TASK_STATE_WAITING);
     }
     global_interrupt_enable (level);
     
@@ -541,7 +541,7 @@ error:
     return ecode;
 }
 
-static void task_yeild_cpu (task_handler_t _from, task_handler_t _to)
+static void task_yeild_cpu (task_handle_t _from, task_handle_t _to)
 {
     UNUSED (_to);
     (void) task_state_change (_from, TASK_STATE_READY);
@@ -549,7 +549,7 @@ static void task_yeild_cpu (task_handler_t _from, task_handler_t _to)
 
 error_t task_sleep (msecond_t _duration)
 {
-    task_handler_t handler = g_task_running;
+    task_handle_t handle = g_task_running;
     interrupt_level_t level;
     preschedule_callback_t callback = null;
     
@@ -562,47 +562,47 @@ error_t task_sleep (msecond_t _duration)
         callback = task_yeild_cpu;
     }
     level = global_interrupt_disable ();
-    handler->timeout_ = _duration;
-    (void) task_state_change (handler, TASK_STATE_WAITING);
+    handle->timeout_ = _duration;
+    (void) task_state_change (handle, TASK_STATE_WAITING);
     global_interrupt_enable (level);
 
     task_schedule (callback);
     return 0;
 }
 
-task_handler_t task_self ()
+task_handle_t task_self ()
 {
     return g_task_running;
 }
 
 //lint -e{818}
-bool is_invalid_task (const task_handler_t _handler)
+bool is_invalid_task (const task_handle_t _handle)
 {
     interrupt_level_t level;
     bool is_invalid;
     
     level = global_interrupt_disable ();
-    is_invalid = is_invalid_handler (_handler);
+    is_invalid = is_invalid_handle (_handle);
     global_interrupt_enable (level);
     return is_invalid;
 }
 
-void task_priority_change (task_handler_t _handler, task_priority_t _to)
+void task_priority_change (task_handle_t _handle, task_priority_t _to)
 {
-    if ((TASK_STATE_READY == _handler->state_) || 
-        (TASK_STATE_RUNNING == _handler->state_)) {
-        task_bitmap_bit_clear (&g_ready_bitmap, _handler->priority_);
-        g_priority_map [_handler->priority_] = null;
-        _handler->priority_ = _to;
-        task_bitmap_bit_set (&g_ready_bitmap, _handler->priority_);
-        g_priority_map [_handler->priority_] = _handler;
+    if ((TASK_STATE_READY == _handle->state_) || 
+        (TASK_STATE_RUNNING == _handle->state_)) {
+        task_bitmap_bit_clear (&g_ready_bitmap, _handle->priority_);
+        g_priority_map [_handle->priority_] = null;
+        _handle->priority_ = _to;
+        task_bitmap_bit_set (&g_ready_bitmap, _handle->priority_);
+        g_priority_map [_handle->priority_] = _handle;
     }
     else {
-        _handler->priority_ = _to;
+        _handle->priority_ = _to;
     }
 }
 
-task_handler_t task_from_priority (task_priority_t _priority)
+task_handle_t task_from_priority (task_priority_t _priority)
 {
     if (_priority > TASK_LAST_INDEX) {
         return null;
@@ -647,17 +647,17 @@ void scheduler_unlock ()
 }
 
 //lint -e{818}
-error_t is_stack_overflowed (const task_handler_t _handler, bool *_p_overflowed)
+error_t is_stack_overflowed (const task_handle_t _handle, bool *_p_overflowed)
 {
     interrupt_level_t level;
     stack_unit_t *p_top;
 
     level = global_interrupt_disable ();
-    if (is_invalid_handler (_handler)) {
+    if (is_invalid_handle (_handle)) {
         global_interrupt_enable (level);
         return ERROR_T (ERROR_TASK_STACK_INVHANDLER);
     }
-    p_top = (stack_unit_t *)_handler->stack_base_;
+    p_top = (stack_unit_t *)_handle->stack_base_;
     if (p_top [0] != MAGIC_NUMBER_STACK || p_top [1] != MAGIC_NUMBER_STACK) {
         *_p_overflowed = true;
     }
@@ -670,7 +670,7 @@ error_t is_stack_overflowed (const task_handler_t _handler, bool *_p_overflowed)
 }
 
 //lint -e{818}
-error_t stack_used_percentage (const task_handler_t _handler, int *_p_percentage)
+error_t stack_used_percentage (const task_handle_t _handle, int *_p_percentage)
 {
     interrupt_level_t level;
     stack_unit_t *p_top;
@@ -681,11 +681,11 @@ error_t stack_used_percentage (const task_handler_t _handler, int *_p_percentage
     }
     
     level = global_interrupt_disable ();
-    if (is_invalid_handler (_handler)) {
+    if (is_invalid_handle (_handle)) {
         global_interrupt_enable (level);
         return ERROR_T (ERROR_TASK_STACK_INVHANDLER);
     }
-    p_top = (stack_unit_t *)_handler->stack_base_;
+    p_top = (stack_unit_t *)_handle->stack_base_;
     // we don't want to lock the interrupt to worsen the response for interrupt
     // so we can lock the scheduler instead
     scheduler_lock ();
@@ -696,24 +696,24 @@ error_t stack_used_percentage (const task_handler_t _handler, int *_p_percentage
         p_top ++;
     }
     *_p_percentage = 100 - 
-        nondirty_count*100/(int)(_handler->stack_size_ >> STACK_WIDTH_SHIFT4BYTE);
+        nondirty_count*100/(int)(_handle->stack_size_ >> STACK_WIDTH_SHIFT4BYTE);
 
     scheduler_unlock ();
     return 0;
 }
 
 //lint -e{818}
-static const char *task_state_description (const task_handler_t _handler)
+static const char *task_state_description (const task_handle_t _handle)
 {
     interrupt_level_t level;
     task_state_t state;
     
     level = global_interrupt_disable ();
-    if (is_invalid_handler (_handler)) {
+    if (is_invalid_handle (_handle)) {
         global_interrupt_enable (level);
         return "INVALID";
     }
-    state = _handler->state_;
+    state = _handle->state_;
     global_interrupt_enable (level);
     
     switch (state)
@@ -737,29 +737,29 @@ static const char *task_state_description (const task_handler_t _handler)
 
 static bool task_dump_for_each (dll_t *_p_dll, dll_node_t *_p_node, void *_p_arg)
 {
-    task_handler_t handler = (task_handler_t)_p_node;
+    task_handle_t handle = (task_handle_t)_p_node;
     bool overflowed;
     int percentage;
 
     UNUSED (_p_dll);
     UNUSED (_p_arg);
     
-    (void) is_stack_overflowed (handler, &overflowed);
-    (void) stack_used_percentage (handler, &percentage);
-    console_print ("  Name: %s\n", handler->name_);
-    console_print ("      Priority: %u\n", handler->priority_);
-    console_print ("    Stack Base: %u\n", handler->stack_base_);
+    (void) is_stack_overflowed (handle, &overflowed);
+    (void) stack_used_percentage (handle, &percentage);
+    console_print ("  Name: %s\n", handle->name_);
+    console_print ("      Priority: %u\n", handle->priority_);
+    console_print ("    Stack Base: %u\n", handle->stack_base_);
     if (overflowed) {
         console_print ("    Stack Size: %u bytes (overflowed)\n", 
-            handler->stack_size_);
+            handle->stack_size_);
     }
     else {
         console_print ("    Stack Size: %u bytes (%u%% used)\n", 
-            handler->stack_size_, percentage);
+            handle->stack_size_, percentage);
     }
-    console_print ("     Scheduled: %u\n", handler->stats_scheduled_);
-    console_print ("         State: %s\n", task_state_description (handler));
-    console_print ("         Event: %x\n", handler->event_received_);
+    console_print ("     Scheduled: %u\n", handle->stats_scheduled_);
+    console_print ("         State: %s\n", task_state_description (handle));
+    console_print ("         Event: %x\n", handle->event_received_);
     console_print ("\n");
     return true;
 }

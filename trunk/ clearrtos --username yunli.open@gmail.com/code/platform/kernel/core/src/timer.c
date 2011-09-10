@@ -39,8 +39,8 @@
 #define TIMER_LAST_INDEX    (CONFIG_MAX_TIMER - 1)
 #define MAGIC_NUMBER_TIMER  0x54494D45L
 
-#define is_invalid_handler(_handler) \
-    ((_handler == null) || ((_handler)->magic_number_ != MAGIC_NUMBER_TIMER))
+#define is_invalid_handle(_handle) \
+    ((_handle == null) || ((_handle)->magic_number_ != MAGIC_NUMBER_TIMER))
 
 typedef struct {
     dll_t dll_;
@@ -58,7 +58,7 @@ typedef struct {
 } timer_statistic_t;
 
 typedef struct {
-    timer_handler_t handler_;
+    timer_handle_t handle_;
     msecond_t remained_round_;
 } timer_remained_t;
 
@@ -69,14 +69,14 @@ static dll_t g_inactive_timer;
 static usize_t g_cursor;
 static bucket_t g_buckets [CONFIG_MAX_BUCKET];
 static timer_statistic_t g_statistics;
-static timer_handler_t g_timer_next;
+static timer_handle_t g_timer_next;
 static bucket_t *g_bucket_firing;
-static queue_handler_t g_timer_queue;
+static queue_handle_t g_timer_queue;
 
 //lint -e{818}
-static void timer_message_send (const timer_handler_t _handler)
+static void timer_message_send (const timer_handle_t _handle)
 {
-    if (0 != queue_message_send (g_timer_queue, &_handler)) {
+    if (0 != queue_message_send (g_timer_queue, &_handle)) {
         interrupt_level_t level;
 
         level = global_interrupt_disable ();
@@ -88,7 +88,7 @@ static void timer_message_send (const timer_handler_t _handler)
 void timer_fire ()
 {
     interrupt_level_t level;
-    timer_handler_t handler;
+    timer_handle_t handle;
     
     level = global_interrupt_disable ();
     g_bucket_firing = &g_buckets [g_cursor];
@@ -97,34 +97,34 @@ void timer_fire ()
         goto out;
     }
     
-    handler  = (timer_handler_t) dll_head (&g_bucket_firing->dll_);
-    while (0 != handler) {
+    handle  = (timer_handle_t) dll_head (&g_bucket_firing->dll_);
+    while (0 != handle) {
         g_statistics.traversed_ ++;
-        g_timer_next = (timer_handler_t) dll_next (&g_bucket_firing->dll_, 
-            &handler->node_);
-        if (handler->round_ > 0) {
+        g_timer_next = (timer_handle_t) dll_next (&g_bucket_firing->dll_, 
+            &handle->node_);
+        if (handle->round_ > 0) {
             // in this case the timer is still not expired
-            handler->round_ --;
+            handle->round_ --;
             break;
         }
         else {
             // hooray, the timer is expired
-            dll_remove (&g_bucket_firing->dll_, &handler->node_);
-            dll_push_tail (&g_inactive_timer, &handler->node_);
-            handler->state_ = TIMER_STOPPED;
+            dll_remove (&g_bucket_firing->dll_, &handle->node_);
+            dll_push_tail (&g_inactive_timer, &handle->node_);
+            handle->state_ = TIMER_STOPPED;
             if (g_bucket_firing->reentrance_ > 0) {
                 g_bucket_firing->level_ ++;
             }
             global_interrupt_enable (level);
-            if (TIMER_TYPE_INTERRUPT == handler->type_) {
-                handler->callback_(handler, handler->arg_);
+            if (TIMER_TYPE_INTERRUPT == handle->type_) {
+                handle->callback_(handle, handle->arg_);
             }
-            else if (TIMER_TYPE_TASK == handler->type_) {
-                timer_message_send (handler);
+            else if (TIMER_TYPE_TASK == handle->type_) {
+                timer_message_send (handle);
             }
             level = global_interrupt_disable ();
         }
-        handler = g_timer_next;
+        handle = g_timer_next;
     }
     
 out:
@@ -139,26 +139,26 @@ out:
 
 static bool timer_check_for_each (dll_t *_p_dll, dll_node_t *_p_node, void *_p_arg)
 {
-    timer_handler_t handler = (timer_handler_t)_p_node;
+    timer_handle_t handle = (timer_handle_t)_p_node;
 
     UNUSED (_p_dll);
     UNUSED (_p_arg);
 
-    console_print ("Error: timer \"%s\" isn't deleted\n", handler->name_);
+    console_print ("Error: timer \"%s\" isn't deleted\n", handle->name_);
     return true;
 }
 
 static void task_timer (const char _name [], void *_p_arg)
 {
-    queue_handler_t queue = (queue_handler_t)_p_arg;
-    timer_handler_t handler;
+    queue_handle_t queue = (queue_handle_t)_p_arg;
+    timer_handle_t handle;
     
     for (;;) {
-        if (0 != queue_message_receive (queue, 0, &handler)) {
+        if (0 != queue_message_receive (queue, 0, &handle)) {
             console_print ("Error: task \"%s\" cannot recieve message", _name);
             (void) task_suspend (task_self ());
         }
-        handler->callback_(handler, handler->arg_);
+        handle->callback_(handle, handle->arg_);
     }
 }
 
@@ -166,30 +166,30 @@ error_t module_timer (system_state_t _state)
 {
     usize_t idx;
     error_t ecode;
-    static task_handler_t handler;
+    static task_handle_t handle;
 
     if (STATE_UP == _state) {
         STACK_DECLARE (stack, CONFIG_TIMER_TASK_STACK_SIZE);
-        QUEUE_BUFFER_DECLARE (buffer, sizeof (timer_handler_t), 
+        QUEUE_BUFFER_DECLARE (buffer, sizeof (timer_handle_t), 
             CONFIG_TIMER_QUEUE_SIZE);
         
         ecode = queue_create ("Timer", &g_timer_queue, buffer, 
-            sizeof (timer_handler_t), CONFIG_TIMER_QUEUE_SIZE);
+            sizeof (timer_handle_t), CONFIG_TIMER_QUEUE_SIZE);
         if (0 != ecode) {
             return ecode;
         }
-        ecode = task_create (&handler, "Timer", CONFIG_TIMER_TASK_PRIORITY, 
+        ecode = task_create (&handle, "Timer", CONFIG_TIMER_TASK_PRIORITY, 
             stack, sizeof (stack));
         if (0 != ecode) {
             return ecode;
         }
-        ecode = task_start (handler, task_timer, g_timer_queue);
+        ecode = task_start (handle, task_timer, g_timer_queue);
         if (0 != ecode) {
             return ecode;
         }
     }
     else if (STATE_DOWN == _state) {
-        if (0 != task_delete (handler)) {
+        if (0 != task_delete (handle)) {
             console_print ("Error: cannot delete task \"Timer\"");
         }
         if (0 != queue_delete (g_timer_queue)) {
@@ -214,119 +214,119 @@ static void timer_init ()
     }
 }
 
-error_t timer_alloc (timer_handler_t *_p_handler, const char *_name,
+error_t timer_alloc (timer_handle_t *_p_handle, const char *_name,
     timer_type_t _type)
 {
     interrupt_level_t level;
     static bool initialized = false;
-    timer_handler_t handler;
+    timer_handle_t handle;
     
-    if (0 == _p_handler) {
+    if (0 == _p_handle) {
         return ERROR_T (ERROR_TIMER_ALLOC_INVHANDLER);
     }
 
-    *_p_handler = null;
+    *_p_handle = null;
     level = global_interrupt_disable ();
     if (!initialized) {
         timer_init ();
         initialized = true;
     }
     
-    handler = (timer_handler_t)dll_pop_head (&g_free_timer);
-    if (0 == handler) {
+    handle = (timer_handle_t)dll_pop_head (&g_free_timer);
+    if (0 == handle) {
         g_statistics.notimer_ ++;
         global_interrupt_enable (level);
         return ERROR_T (ERROR_TIMER_ALLOC_NOTIMER);
     }
     global_interrupt_enable (level);
 
-    handler->type_ = _type;
-    handler->magic_number_ = MAGIC_NUMBER_TIMER;
-    handler->state_ = TIMER_CREATED;
-    dll_node_init (&handler->node_);
+    handle->type_ = _type;
+    handle->magic_number_ = MAGIC_NUMBER_TIMER;
+    handle->state_ = TIMER_CREATED;
+    dll_node_init (&handle->node_);
     if (0 == _name) {
-        handler->name_ [0] = 0;
+        handle->name_ [0] = 0;
     }
     else {
-        strncpy (handler->name_, _name, (usize_t)sizeof (handler->name_));
-        handler->name_ [sizeof (handler->name_) - 1] = 0;
+        strncpy (handle->name_, _name, (usize_t)sizeof (handle->name_));
+        handle->name_ [sizeof (handle->name_) - 1] = 0;
     }
 
     level = global_interrupt_disable ();
-    dll_push_tail (&g_inactive_timer, &handler->node_);
+    dll_push_tail (&g_inactive_timer, &handle->node_);
     global_interrupt_enable (level);
     
-    *_p_handler = handler;
+    *_p_handle = handle;
     return 0;
 }
 
-error_t timer_free (timer_handler_t _handler)
+error_t timer_free (timer_handle_t _handle)
 {
     interrupt_level_t level;
     
     level = global_interrupt_disable ();
-    if (is_invalid_handler (_handler)) {
+    if (is_invalid_handle (_handle)) {
         global_interrupt_enable (level);
         return ERROR_T (ERROR_TIMER_FREE_INVHANDLER);
     }
-    if (TIMER_STARTED == _handler->state_) {
-        timer_handler_t next;
+    if (TIMER_STARTED == _handle->state_) {
+        timer_handle_t next;
         
-        if (g_timer_next == _handler) {
-            g_timer_next = (timer_handler_t) dll_next (&g_bucket_firing->dll_, 
-                &_handler->node_);
+        if (g_timer_next == _handle) {
+            g_timer_next = (timer_handle_t) dll_next (&g_bucket_firing->dll_, 
+                &_handle->node_);
         }
-        next = (timer_handler_t)dll_next 
-            (&g_buckets [_handler->bucket_index_].dll_, &_handler->node_);
+        next = (timer_handle_t)dll_next 
+            (&g_buckets [_handle->bucket_index_].dll_, &_handle->node_);
         if (0 != next) {
-            next->round_ += _handler->round_;
+            next->round_ += _handle->round_;
         }
-        dll_remove (&g_buckets [_handler->bucket_index_].dll_, &_handler->node_);
-        if (g_buckets [_handler->bucket_index_].reentrance_ > 0) {
+        dll_remove (&g_buckets [_handle->bucket_index_].dll_, &_handle->node_);
+        if (g_buckets [_handle->bucket_index_].reentrance_ > 0) {
             g_bucket_firing->level_ ++;
         }
     }
     else {
-        dll_remove (&g_inactive_timer, &_handler->node_);
+        dll_remove (&g_inactive_timer, &_handle->node_);
     }
-    _handler->magic_number_ = 0;
-    dll_push_tail (&g_free_timer, &_handler->node_);
+    _handle->magic_number_ = 0;
+    dll_push_tail (&g_free_timer, &_handle->node_);
     global_interrupt_enable (level);
     
     return 0;
 }
 
-static void timer_insert (timer_handler_t _handler)
+static void timer_insert (timer_handle_t _handle)
 {
     interrupt_level_t interrupt_level;
     bucket_t *p_bucket;
     usize_t count = 0, round, level;
-    timer_handler_t iterator;
+    timer_handle_t iterator;
     
     interrupt_level = global_interrupt_disable ();
-    _handler->bucket_index_ = (g_cursor + _handler->ticks_) % CONFIG_MAX_BUCKET;
-    dll_remove (&g_inactive_timer, &_handler->node_);
+    _handle->bucket_index_ = (g_cursor + _handle->ticks_) % CONFIG_MAX_BUCKET;
+    dll_remove (&g_inactive_timer, &_handle->node_);
 
-    p_bucket = &g_buckets [_handler->bucket_index_];
-    round = _handler->ticks_ / CONFIG_MAX_BUCKET;
+    p_bucket = &g_buckets [_handle->bucket_index_];
+    round = _handle->ticks_ / CONFIG_MAX_BUCKET;
     level = ++ p_bucket->level_;
     p_bucket->reentrance_ ++;
 
 redo:
-    iterator = (timer_handler_t) dll_head (&p_bucket->dll_);
-    _handler->round_ = round;
+    iterator = (timer_handle_t) dll_head (&p_bucket->dll_);
+    _handle->round_ = round;
     for (;;) {
         if (0 == iterator) {
-            dll_push_tail (&p_bucket->dll_, &_handler->node_);
+            dll_push_tail (&p_bucket->dll_, &_handle->node_);
             break;
         }
-        if (_handler->round_ <= iterator->round_) {
-            iterator->round_ -= _handler->round_;
-            dll_insert_before (&p_bucket->dll_, &iterator->node_, &_handler->node_);
+        if (_handle->round_ <= iterator->round_) {
+            iterator->round_ -= _handle->round_;
+            dll_insert_before (&p_bucket->dll_, &iterator->node_, &_handle->node_);
             break;
         }
-        _handler->round_ -= iterator->round_;
-        iterator = (timer_handler_t) dll_next (&p_bucket->dll_, &iterator->node_);
+        _handle->round_ -= iterator->round_;
+        iterator = (timer_handle_t) dll_next (&p_bucket->dll_, &iterator->node_);
             
         count ++;
         if (count < CONFIG_INTERRUPT_FLASH_FREQUENCY) {
@@ -344,20 +344,20 @@ redo:
             goto redo;
         }
     }
-    if (g_bucket_firing == &g_buckets [_handler->bucket_index_]) {
-        if(0 == g_timer_next || _handler->round_ <= g_timer_next->round_) {
-            g_timer_next = _handler;
+    if (g_bucket_firing == &g_buckets [_handle->bucket_index_]) {
+        if(0 == g_timer_next || _handle->round_ <= g_timer_next->round_) {
+            g_timer_next = _handle;
         }
     }
-    g_buckets [_handler->bucket_index_].hit_ ++;
+    g_buckets [_handle->bucket_index_].hit_ ++;
     if (0 == -- p_bucket->reentrance_) {
         p_bucket->level_ = 0;
     }
-    _handler->state_ = TIMER_STARTED;
+    _handle->state_ = TIMER_STARTED;
     global_interrupt_enable (interrupt_level);
 }
 
-error_t timer_start (timer_handler_t _handler, msecond_t _duration, 
+error_t timer_start (timer_handle_t _handle, msecond_t _duration, 
     expiry_callback_t _cb, void *_arg)
 {
     interrupt_level_t level;
@@ -366,108 +366,108 @@ error_t timer_start (timer_handler_t _handler, msecond_t _duration,
         return ERROR_T (ERROR_TIMER_ALLOC_INVCB);
     }
     level = global_interrupt_disable ();
-    if (is_invalid_handler (_handler)) {
+    if (is_invalid_handle (_handle)) {
         global_interrupt_enable (level);
         return ERROR_T (ERROR_TIMER_START_INVHANDLER);
     }
-    if (TIMER_STARTED == _handler->state_) {
+    if (TIMER_STARTED == _handle->state_) {
         g_statistics.abnormal_ ++;
         global_interrupt_enable (level);
         return ERROR_T (ERROR_TIMER_START_INVSTATE);
     }
 
-    _handler->ticks_ = _duration / CONFIG_TICK_DURATION_IN_MSEC;
-    if (0 == _handler->ticks_) {
-        _handler->ticks_ ++;
+    _handle->ticks_ = _duration / CONFIG_TICK_DURATION_IN_MSEC;
+    if (0 == _handle->ticks_) {
+        _handle->ticks_ ++;
     }
-    _handler->callback_ = _cb;
-    _handler->arg_ = _arg;
+    _handle->callback_ = _cb;
+    _handle->arg_ = _arg;
     global_interrupt_enable (level);
-    timer_insert (_handler);
+    timer_insert (_handle);
     return 0;
 }
 
-error_t timer_restart (timer_handler_t _handler)
+error_t timer_restart (timer_handle_t _handle)
 {
     interrupt_level_t level;
     
     level = global_interrupt_disable ();
-    if (is_invalid_handler (_handler)) {
+    if (is_invalid_handle (_handle)) {
         global_interrupt_enable (level);
         return ERROR_T (ERROR_TIMER_RESTART_INVHANDLER);
     }
-    if (TIMER_STOPPED != _handler->state_) {
+    if (TIMER_STOPPED != _handle->state_) {
         g_statistics.abnormal_ ++;
         global_interrupt_enable (level);
         return ERROR_T (ERROR_TIMER_RESTART_INVSTATE);
     }
     global_interrupt_enable (level);
 
-    timer_insert (_handler);
+    timer_insert (_handle);
     return 0;
 }
 
 static bool timer_calculate_remained (dll_t *_p_dll, dll_node_t *_p_node, void *_p_arg)
 {
-    timer_handler_t handler = (timer_handler_t)_p_node;
+    timer_handle_t handle = (timer_handle_t)_p_node;
     timer_remained_t *p_remained = (timer_remained_t *)_p_arg;
 
     UNUSED (_p_dll);
     UNUSED (_p_arg);
 
-    if (p_remained->handler_ == handler) {
-        p_remained->remained_round_ += handler->round_;
+    if (p_remained->handle_ == handle) {
+        p_remained->remained_round_ += handle->round_;
         return false;
     }
-    p_remained->remained_round_ += handler->round_;
+    p_remained->remained_round_ += handle->round_;
     return true;
 }
 
-error_t timer_stop (timer_handler_t _handler, msecond_t *_p_remained)
+error_t timer_stop (timer_handle_t _handle, msecond_t *_p_remained)
 {
     interrupt_level_t level;
-    timer_handler_t next;
+    timer_handle_t next;
     
     level = global_interrupt_disable ();
-    if (is_invalid_handler (_handler)) {
+    if (is_invalid_handle (_handle)) {
         global_interrupt_enable (level);
         return ERROR_T (ERROR_TIMER_STOP_INVHANDLER);
     }
-    if (_handler->state_ != TIMER_STARTED) {
+    if (_handle->state_ != TIMER_STARTED) {
         g_statistics.abnormal_ ++;
         global_interrupt_enable (level);
         return ERROR_T (ERROR_TIMER_STOP_INVSTATE);
     }
-    if (g_timer_next == _handler) {
-        g_timer_next = (timer_handler_t) dll_next (&g_bucket_firing->dll_, 
-            &_handler->node_);
+    if (g_timer_next == _handle) {
+        g_timer_next = (timer_handle_t) dll_next (&g_bucket_firing->dll_, 
+            &_handle->node_);
     }
     if (_p_remained != null) {
-        timer_remained_t remained = {_handler, 0};
+        timer_remained_t remained = {_handle, 0};
         
-        (void) dll_traverse (&g_buckets [_handler->bucket_index_].dll_, 
+        (void) dll_traverse (&g_buckets [_handle->bucket_index_].dll_, 
             timer_calculate_remained, &remained);
         *_p_remained = remained.remained_round_ * CONFIG_MAX_BUCKET;
-        if (g_cursor > _handler->bucket_index_) {
+        if (g_cursor > _handle->bucket_index_) {
             *_p_remained = (*_p_remained) * CONFIG_MAX_BUCKET - 
-                (g_cursor - _handler->bucket_index_);
+                (g_cursor - _handle->bucket_index_);
         }
         else {
             *_p_remained = (*_p_remained - 1) * CONFIG_MAX_BUCKET +
-                (g_cursor - _handler->bucket_index_) + 1;
+                (g_cursor - _handle->bucket_index_) + 1;
         }
         *_p_remained *= CONFIG_TICK_DURATION_IN_MSEC;
     }
-    _handler->state_ = TIMER_STOPPED;
-    next = (timer_handler_t)dll_next (
-        &g_buckets [_handler->bucket_index_].dll_, &_handler->node_);
+    _handle->state_ = TIMER_STOPPED;
+    next = (timer_handle_t)dll_next (
+        &g_buckets [_handle->bucket_index_].dll_, &_handle->node_);
     if (0 != next) {
-        next->round_ += _handler->round_;
+        next->round_ += _handle->round_;
     }
-    dll_remove (&g_buckets [_handler->bucket_index_].dll_, &_handler->node_);
-    dll_push_tail (&g_inactive_timer, &_handler->node_);
-    if (g_buckets [_handler->bucket_index_].reentrance_ > 0) {
-        g_buckets [_handler->bucket_index_].level_ ++;
+    dll_remove (&g_buckets [_handle->bucket_index_].dll_, &_handle->node_);
+    dll_push_tail (&g_inactive_timer, &_handle->node_);
+    if (g_buckets [_handle->bucket_index_].reentrance_ > 0) {
+        g_buckets [_handle->bucket_index_].level_ ++;
     }
     global_interrupt_enable (level);
 
@@ -475,17 +475,17 @@ error_t timer_stop (timer_handler_t _handler, msecond_t *_p_remained)
 }
 
 //lint -e{818}
-bool timer_is_started (const timer_handler_t _handler)
+bool timer_is_started (const timer_handle_t _handle)
 {
     interrupt_level_t level;
     bool started;
     
     level = global_interrupt_disable ();
-    if (is_invalid_handler (_handler)) {
+    if (is_invalid_handle (_handle)) {
         started = false;
     }
     else {
-        started = (bool)(_handler->state_ == TIMER_STARTED);
+        started = (bool)(_handle->state_ == TIMER_STARTED);
     }
     global_interrupt_enable (level);
     return started;

@@ -30,7 +30,7 @@
 
 static void task_high (const char _name [], void *_p_arg)
 {
-    mutex_handler_t mutex = (mutex_handler_t)_p_arg;
+    mutex_handle_t mutex = (mutex_handle_t)_p_arg;
 
     console_print ("%s: going to take lock\n", _name);
     (void) mutex_lock (mutex, WAIT_FOREVER);
@@ -45,7 +45,7 @@ static void task_high (const char _name [], void *_p_arg)
 
 static void task_low (const char _name [], void *_p_arg)
 {
-    mutex_handler_t mutex = (mutex_handler_t)_p_arg;
+    mutex_handle_t mutex = (mutex_handle_t)_p_arg;
 
     console_print ("%s: going to take lock\n", _name);
     (void) mutex_lock (mutex, WAIT_FOREVER);
@@ -63,12 +63,12 @@ static void task_low (const char _name [], void *_p_arg)
 
 error_t module_testapp (system_state_t _state)
 {
-    static task_handler_t high;
-    static task_handler_t low;
+    static task_handle_t high;
+    static task_handle_t low;
     STACK_DECLARE (stack_for_high, 1024);
     STACK_DECLARE (stack_for_low, 1024);
-    static mutex_handler_t mutex;
-    static device_handler_t ctrlc_handler;
+    static mutex_handle_t mutex;
+    static device_handle_t ctrlc_handle;
     
     if (STATE_INITIALIZING == _state) {
         (void) mutex_create (&mutex, "Test", true);
@@ -79,10 +79,10 @@ error_t module_testapp (system_state_t _state)
         (void) task_create (&high, "Task High", 11, stack_for_high, sizeof (stack_for_high));
         (void) task_start (high, task_high, mutex);
         
-        (void) device_open (&ctrlc_handler, "/dev/ui/ctrlc", 0);
+        (void) device_open (&ctrlc_handle, "/dev/ui/ctrlc", 0);
     }
     else if (STATE_DESTROYING == _state) {
-        (void) device_close (ctrlc_handler);
+        (void) device_close (ctrlc_handle);
         (void) task_delete (high);
         (void) task_delete (low);
         (void) mutex_delete (mutex);

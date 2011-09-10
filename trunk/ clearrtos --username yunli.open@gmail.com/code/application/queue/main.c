@@ -30,18 +30,18 @@
 
 #define CONFIG_MAX_ELEMENT   20
 
-static task_handler_t g_task_producer;
-static task_handler_t g_task_consumer;
+static task_handle_t g_task_producer;
+static task_handle_t g_task_consumer;
 
 STACK_DECLARE (g_stack_for_producer, 1024);
 STACK_DECLARE (g_stack_for_consumer, 1024);
 
 QUEUE_BUFFER_DECLARE (g_queue_buffer, sizeof (char), CONFIG_MAX_ELEMENT);
-static queue_handler_t g_queue;
+static queue_handle_t g_queue;
 
 static void task_producer (const char _name [], void *_p_arg)
 {
-    queue_handler_t p_queue = (queue_handler_t)_p_arg;
+    queue_handle_t p_queue = (queue_handle_t)_p_arg;
     char greeting [] = "Have a good day!\n";
     char *p_char = greeting;
     int len = sizeof (greeting) - 1;
@@ -55,7 +55,7 @@ static void task_producer (const char _name [], void *_p_arg)
 
 static void task_consumer (const char _name [], void *_p_arg)
 {
-    queue_handler_t p_queue = (queue_handler_t)_p_arg;
+    queue_handle_t p_queue = (queue_handle_t)_p_arg;
     char ch;
 
     UNUSED (_name);
@@ -73,7 +73,7 @@ static void task_consumer (const char _name [], void *_p_arg)
 
 error_t module_testapp (system_state_t _state)
 {
-    static device_handler_t ctrlc_handler;
+    static device_handle_t ctrlc_handle;
     
     if (STATE_INITIALIZING == _state) {
         (void) queue_create ("Test", &g_queue, g_queue_buffer, sizeof (char), 
@@ -87,10 +87,10 @@ error_t module_testapp (system_state_t _state)
             g_stack_for_consumer, sizeof (g_stack_for_consumer));
         (void) task_start (g_task_consumer, task_consumer, g_queue);
         
-        (void) device_open (&ctrlc_handler, "/dev/ui/ctrlc", 0);
+        (void) device_open (&ctrlc_handle, "/dev/ui/ctrlc", 0);
     }
     else if (STATE_DESTROYING == _state) {
-        (void) device_close (ctrlc_handler);
+        (void) device_close (ctrlc_handle);
         (void) task_delete (g_task_consumer);
         (void) task_delete (g_task_producer);
         (void) queue_delete (g_queue);

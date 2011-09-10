@@ -37,7 +37,7 @@ typedef struct {
     device_t common_;
     bool is_opened_;
     void (*tick_process_) (); 
-} device_clock_t, *clock_handler_t;
+} device_clock_t, *clock_handle_t;
 
 #ifdef  __cplusplus
 extern "C"
@@ -45,7 +45,7 @@ extern "C"
 #endif
 
 error_t clock_driver_install (const char _name[]);
-error_t clock_device_register (const char _name [], clock_handler_t _handler);
+error_t clock_device_register (const char _name [], clock_handle_t _handle);
 
 #ifdef __cplusplus
 }

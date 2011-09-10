@@ -32,7 +32,7 @@
 typedef struct {
     sync_object_t object_;
     usize_t count_;
-} semaphore_t, *semaphore_handler_t;
+} semaphore_t, *semaphore_handle_t;
 
 #ifdef  __cplusplus
 extern "C" {
@@ -40,13 +40,13 @@ extern "C" {
 
 error_t module_semaphore (system_state_t _state);
 
-error_t semaphore_create (semaphore_handler_t *_p_handler, const char _name [], 
+error_t semaphore_create (semaphore_handle_t *_p_handle, const char _name [], 
     usize_t _count);
-error_t semaphore_delete (semaphore_handler_t _handler);
-error_t semaphore_try_to_take (semaphore_handler_t _handler);
-error_t semaphore_take (semaphore_handler_t _handler, msecond_t _timeout);
-error_t semaphore_give (semaphore_handler_t _handler);
-usize_t semaphore_count_get (const semaphore_handler_t _handler);
+error_t semaphore_delete (semaphore_handle_t _handle);
+error_t semaphore_try_to_take (semaphore_handle_t _handle);
+error_t semaphore_take (semaphore_handle_t _handle, msecond_t _timeout);
+error_t semaphore_give (semaphore_handle_t _handle);
+usize_t semaphore_count_get (const semaphore_handle_t _handle);
 void semaphore_dump ();
 
 #ifdef __cplusplus

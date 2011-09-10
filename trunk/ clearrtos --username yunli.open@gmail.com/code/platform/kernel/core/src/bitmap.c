@@ -33,30 +33,30 @@ static int g_bits_per_row;
 #error "CONFIG_MAX_BITMAP_ROW should be defined less than or equal to 32"
 #endif
 
-void task_bitmap_init (task_bitmap_handler_t _handler)
+void task_bitmap_init (task_bitmap_handle_t _handle)
 {
-    _handler->row_bitmap_ = 0;
-    memset (_handler->buffer_, 0, sizeof (_handler->buffer_));
+    _handle->row_bitmap_ = 0;
+    memset (_handle->buffer_, 0, sizeof (_handle->buffer_));
     (void) convert_to_shift_bits (CONFIG_MAX_BIT_PER_ROW, &g_bits_per_row);
 }
 
-void task_bitmap_bit_set (task_bitmap_handler_t _handler, bit_t _bit)
+void task_bitmap_bit_set (task_bitmap_handle_t _handle, bit_t _bit)
 {
     bit_t row = _bit >> g_bits_per_row;
     bit_t bit = (bit_t)1 << (_bit & (CONFIG_MAX_BIT_PER_ROW - 1));
 
-    _handler->buffer_ [row] |= bit;
-    _handler->row_bitmap_ |= ((bit_t)1 << row);
+    _handle->buffer_ [row] |= bit;
+    _handle->row_bitmap_ |= ((bit_t)1 << row);
 }
 
-void task_bitmap_bit_clear (task_bitmap_handler_t _handler, bit_t _bit)
+void task_bitmap_bit_clear (task_bitmap_handle_t _handle, bit_t _bit)
 {
     bit_t row = _bit >> g_bits_per_row;
     bit_t bit = (bit_t)1 << (_bit & (CONFIG_MAX_BIT_PER_ROW - 1));
 
-    _handler->buffer_ [row] &= ~bit;
-    if (0 == _handler->buffer_ [row]) {
-        _handler->row_bitmap_ &= ~((bit_t)1 << row);
+    _handle->buffer_ [row] &= ~bit;
+    if (0 == _handle->buffer_ [row]) {
+        _handle->row_bitmap_ &= ~((bit_t)1 << row);
     }
 }
 
@@ -107,23 +107,23 @@ static inline bit_t bitmap_to_bit (u32_t _bitmap)
 }
 
 //lint -e{818}
-bit_t task_bitmap_lowest_bit_get (const task_bitmap_handler_t _handler)
+bit_t task_bitmap_lowest_bit_get (const task_bitmap_handle_t _handle)
 {
     bit_t row, bit;
 
-    row = bitmap_to_bit (_handler->row_bitmap_);
+    row = bitmap_to_bit (_handle->row_bitmap_);
     if (INVALID_BIT == row) {
         return row;
     }
 
-    bit = bitmap_to_bit (_handler->buffer_[row]);
+    bit = bitmap_to_bit (_handle->buffer_[row]);
     bit += row << g_bits_per_row;
     return bit;
 }
 
 //lint -e{818}
-bool task_bitmap_is_empty (const task_bitmap_handler_t _handler)
+bool task_bitmap_is_empty (const task_bitmap_handle_t _handle)
 {
-    return (bool)(0 == _handler->row_bitmap_);
+    return (bool)(0 == _handle->row_bitmap_);
 }
 

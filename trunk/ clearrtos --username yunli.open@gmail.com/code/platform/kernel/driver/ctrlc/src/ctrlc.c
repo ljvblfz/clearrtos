@@ -31,38 +31,38 @@
 #include "console.h"
 #include "task.h"
 
-void ctrlc_interrupt_handler (device_handler_t _handler)
+void ctrlc_interrupt_handler (device_handle_t _handle)
 {
-    ctrlc_handler_t handler = (ctrlc_handler_t) _handler;
+    ctrlc_handle_t handle = (ctrlc_handle_t) _handle;
     
-    if (handler->is_opened_) {
+    if (handle->is_opened_) {
         console_print ("\nInfo: Ctrl+C pressed\n");
         multitasking_stop ();
     }
 }
 
-static error_t ctrlc_open (device_handler_t _handler, open_mode_t _mode)
+static error_t ctrlc_open (device_handle_t _handle, open_mode_t _mode)
 {
-    ctrlc_handler_t handler = (ctrlc_handler_t)_handler;
+    ctrlc_handle_t handle = (ctrlc_handle_t)_handle;
 
     UNUSED (_mode);
     
-    if (handler->is_opened_) {
+    if (handle->is_opened_) {
         return ERROR_T (ERROR_CTRLC_OPEN_OPENED);
     }
 
-    handler->is_opened_ = true;
-    interrupt_enable (_handler->interrupt_vector_);
+    handle->is_opened_ = true;
+    interrupt_enable (_handle->interrupt_vector_);
     console_print ("\nInfo: press Ctrl+C to terminate!\n");
     return 0;
 }
 
-static error_t ctrlc_close (device_handler_t _handler)
+static error_t ctrlc_close (device_handle_t _handle)
 {
-    ctrlc_handler_t handler = (ctrlc_handler_t)_handler;
+    ctrlc_handle_t handle = (ctrlc_handle_t)_handle;
     
-    interrupt_disable (_handler->interrupt_vector_);
-    handler->is_opened_ = false;
+    interrupt_disable (_handle->interrupt_vector_);
+    handle->is_opened_ = false;
     return 0;
 }
 
@@ -79,11 +79,11 @@ error_t ctrlc_driver_install (const char _name[])
     return driver_install (_name, &opt, 0);
 }
 
-error_t ctrlc_device_register (const char _name [], ctrlc_handler_t _handler)
+error_t ctrlc_device_register (const char _name [], ctrlc_handle_t _handle)
 {
-    _handler->common_.interrupt_vector_ = SIGINT;
-    _handler->common_.interrupt_handle_= ctrlc_interrupt_handler;
-    _handler->is_opened_ = false;
-    return device_register (_name, &_handler->common_);
+    _handle->common_.interrupt_vector_ = SIGINT;
+    _handle->common_.interrupt_handler_= ctrlc_interrupt_handler;
+    _handle->is_opened_ = false;
+    return device_register (_name, &_handle->common_);
 }
 

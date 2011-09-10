@@ -28,14 +28,14 @@
 
 #include "syncobj.h"
 
-#ifndef __task_handler_defined__
+#ifndef __task_handle_defined__
 struct type_task;
-typedef struct type_task task_t, *task_handler_t;
-#define __task_handler_defined__
+typedef struct type_task task_t, *task_handle_t;
+#define __task_handle_defined__
 #endif
 
 #ifndef __event_set_defined__
-typedef u32_t event_set_t, *event_set_handler_t;
+typedef u32_t event_set_t, *event_set_handle_t;
 #define __event_set_defined__
 #endif
 
@@ -53,9 +53,9 @@ typedef u32_t event_option_t;
 extern "C" {
 #endif
 
-error_t event_receive (event_set_t _expected, event_set_handler_t _received, 
+error_t event_receive (event_set_t _expected, event_set_handle_t _received, 
     msecond_t _timeout, event_option_t _option);
-error_t event_send (task_handler_t _handler, event_set_t _sent);
+error_t event_send (task_handle_t _handle, event_set_t _sent);
 error_t event_clear ();
 
 #ifdef __cplusplus
