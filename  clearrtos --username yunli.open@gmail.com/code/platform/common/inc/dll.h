@@ -33,13 +33,13 @@
 typedef struct dll_node {
     struct dll_node *prev_;
     struct dll_node *next_;
-} dll_node_t, *dll_node_handler_t;
+} dll_node_t, *dll_node_handle_t;
 
 typedef struct {
     dll_node_t *head_;
     dll_node_t *tail_;
     usize_t count_;
-} dll_t, *dll_handler_t;
+} dll_t, *dll_handle_t;
 
 typedef bool (*traverse_callback_t)(dll_t *, dll_node_t *, void *);
 

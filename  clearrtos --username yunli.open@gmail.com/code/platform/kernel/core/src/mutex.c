@@ -32,10 +32,10 @@
 static mutex_t g_mutex_pool [CONFIG_MAX_MUTEX];
 static sync_container_t g_mutex_container;
 
-static bool mutex_callback_lock (sync_object_handler_t _handler)
+static bool mutex_callback_lock (sync_object_handle_t _handle)
 {
-    mutex_handler_t p_mutex = (mutex_handler_t) _handler;
-    task_handler_t p_task = task_self ();
+    mutex_handle_t p_mutex = (mutex_handle_t) _handle;
+    task_handle_t p_task = task_self ();
     
     if (null == p_mutex->owner_) {
         // grab the mutex
@@ -51,10 +51,10 @@ static bool mutex_callback_lock (sync_object_handler_t _handler)
     return false;
 }
 
-static void mutex_callback_wait (sync_object_handler_t _handler)
+static void mutex_callback_wait (sync_object_handle_t _handle)
 {
-    mutex_handler_t p_mutex = (mutex_handler_t) _handler;
-    task_handler_t p_task = task_self ();
+    mutex_handle_t p_mutex = (mutex_handle_t) _handle;
+    task_handle_t p_task = task_self ();
     
     if (p_mutex->owner_->priority_ > p_task->priority_) {
         if (!p_mutex->inherited_) {
@@ -65,11 +65,11 @@ static void mutex_callback_wait (sync_object_handler_t _handler)
     }
 }
 
-static bool mutex_callback_unlock (sync_object_handler_t _handler,
+static bool mutex_callback_unlock (sync_object_handle_t _handle,
     error_t *_p_ecode)
 {
-    mutex_handler_t p_mutex = (mutex_handler_t) _handler;
-    task_handler_t p_task = task_self ();
+    mutex_handle_t p_mutex = (mutex_handle_t) _handle;
+    task_handle_t p_task = task_self ();
 
     // grab the mutex
     if (is_in_interrupt () || is_invalid_task (p_task)) {
@@ -96,14 +96,14 @@ static bool mutex_callback_unlock (sync_object_handler_t _handler,
     return false;
 }
 
-static void mutex_callback_wake (sync_object_handler_t _handler)
+static void mutex_callback_wake (sync_object_handle_t _handle)
 {
-    mutex_handler_t p_mutex = (mutex_handler_t) _handler;
-    task_handler_t p_task;
+    mutex_handle_t p_mutex = (mutex_handle_t) _handle;
+    task_handle_t p_task;
     bit_t bit;
 
-    bit = task_bitmap_lowest_bit_get (&_handler->pending_bitmap_);
-    task_bitmap_bit_clear (&_handler->pending_bitmap_, bit);
+    bit = task_bitmap_lowest_bit_get (&_handle->pending_bitmap_);
+    task_bitmap_bit_clear (&_handle->pending_bitmap_, bit);
     p_task = task_from_priority ((task_priority_t)bit);
     (void) task_state_change (p_task, TASK_STATE_READY);
     p_mutex->owner_ = p_task;
@@ -112,12 +112,12 @@ static void mutex_callback_wake (sync_object_handler_t _handler)
 static bool mutex_check_for_each (dll_t *_p_dll, dll_node_t *_p_node, void *_p_arg)
 {
     //lint -e{740, 826}
-    mutex_handler_t handler = (mutex_handler_t)_p_node;
+    mutex_handle_t handle = (mutex_handle_t)_p_node;
 
     UNUSED (_p_dll);
     UNUSED (_p_arg);
 
-    console_print ("Error: mutex \"%s\" isn't deleted\n", handler->object_.name_);
+    console_print ("Error: mutex \"%s\" isn't deleted\n", handle->object_.name_);
     return true;
 }
 
@@ -140,7 +140,7 @@ static void mutex_init ()
         CONFIG_MAX_MUTEX, sizeof (mutex_t), &opt);
 }
 
-error_t mutex_create (mutex_handler_t *_p_handler, const char _name [], 
+error_t mutex_create (mutex_handle_t *_p_handle, const char _name [], 
     bool _recursive)
 {
     static bool initialized = false;
@@ -154,50 +154,50 @@ error_t mutex_create (mutex_handler_t *_p_handler, const char _name [],
     }
     global_interrupt_enable (level);
     ecode = sync_object_alloc (&g_mutex_container, 
-        (sync_object_handler_t *) _p_handler, _name);
+        (sync_object_handle_t *) _p_handle, _name);
     if (0 == ecode) {
-        (*_p_handler)->owner_ = null;
-        (*_p_handler)->inherited_ = false;
-        (*_p_handler)->is_recursive_ = _recursive;
+        (*_p_handle)->owner_ = null;
+        (*_p_handle)->inherited_ = false;
+        (*_p_handle)->is_recursive_ = _recursive;
     }
     return ecode;
 }
 
-error_t mutex_delete (mutex_handler_t _handler)
+error_t mutex_delete (mutex_handle_t _handle)
 {
-    return sync_object_free (&_handler->object_);
+    return sync_object_free (&_handle->object_);
 }
 
-error_t mutex_try_to_lock (mutex_handler_t _handler)
+error_t mutex_try_to_lock (mutex_handle_t _handle)
 {
-    return sync_point_try_to_enter (&_handler->object_);
+    return sync_point_try_to_enter (&_handle->object_);
 }
 
-error_t mutex_lock (mutex_handler_t _handler, msecond_t _timeout)
+error_t mutex_lock (mutex_handle_t _handle, msecond_t _timeout)
 {
-    return sync_point_enter (&_handler->object_, _timeout);
+    return sync_point_enter (&_handle->object_, _timeout);
 }
 
-error_t mutex_unlock (mutex_handler_t _handler)
+error_t mutex_unlock (mutex_handle_t _handle)
 {
-    return sync_point_exit (&_handler->object_);
+    return sync_point_exit (&_handle->object_);
 }
 
 static bool mutex_dump_for_each (dll_t *_p_dll, dll_node_t *_p_node, 
     void *_p_arg)
 {
     //lint -e{740, 826}
-    mutex_handler_t handler = (mutex_handler_t)_p_node;
+    mutex_handle_t handle = (mutex_handle_t)_p_node;
 
     UNUSED (_p_dll);
     UNUSED (_p_arg);
     
-    console_print ("  Name: %s\n", handler->object_.name_);
-    if (0 == handler->owner_) {
+    console_print ("  Name: %s\n", handle->object_.name_);
+    if (0 == handle->owner_) {
         console_print ("    Owner: null\n");
     }
     else {
-        console_print ("    Owner: %s\n", handler->owner_->name_);
+        console_print ("    Owner: %s\n", handle->owner_->name_);
     }
     console_print ("\n");
     return true;

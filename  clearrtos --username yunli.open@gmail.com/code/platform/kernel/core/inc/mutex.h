@@ -35,20 +35,20 @@ typedef u32_t task_priority_t;
 #define __task_priority_defined__
 #endif
 
-#ifndef __task_handler_defined__
+#ifndef __task_handle_defined__
 struct type_task;
-typedef struct type_task task_t, *task_handler_t;
-#define __task_handler_defined__
+typedef struct type_task task_t, *task_handle_t;
+#define __task_handle_defined__
 #endif
 
 typedef struct {
     sync_object_t object_;
-    task_handler_t owner_;
+    task_handle_t owner_;
     bool inherited_;
     task_priority_t original_;
     bool is_recursive_;
     usize_t reference_;
-} mutex_t, *mutex_handler_t;
+} mutex_t, *mutex_handle_t;
 
 #ifdef  __cplusplus
 extern "C" {
@@ -56,12 +56,12 @@ extern "C" {
 
 error_t module_mutex (system_state_t _state);
 
-error_t mutex_create (mutex_handler_t *_p_handler, const char _name [], 
+error_t mutex_create (mutex_handle_t *_p_handle, const char _name [], 
     bool _recursive);
-error_t mutex_delete (mutex_handler_t _handler);
-error_t mutex_try_to_lock (mutex_handler_t _handler);
-error_t mutex_lock (mutex_handler_t _handler, msecond_t _timeout);
-error_t mutex_unlock (mutex_handler_t _handler);
+error_t mutex_delete (mutex_handle_t _handle);
+error_t mutex_try_to_lock (mutex_handle_t _handle);
+error_t mutex_lock (mutex_handle_t _handle, msecond_t _timeout);
+error_t mutex_unlock (mutex_handle_t _handle);
 void mutex_dump ();
 
 #ifdef __cplusplus

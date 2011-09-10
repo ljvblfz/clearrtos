@@ -31,10 +31,10 @@
 #include "dll.h"
 #include "module.h"
 
-typedef struct type_timer *timer_handler_t;
+typedef struct type_timer *timer_handle_t;
 
 // callback function for timer expiration
-typedef void (*expiry_callback_t)(timer_handler_t _handler, void *_arg);
+typedef void (*expiry_callback_t)(timer_handle_t _handle, void *_arg);
 
 typedef enum {
     TIMER_CREATED,
@@ -68,14 +68,14 @@ error_t module_timer (system_state_t _state);
 
 int timer_lock_init ();
 void timer_fire ();
-error_t timer_alloc (timer_handler_t *_p_handler, const char *_name,
+error_t timer_alloc (timer_handle_t *_p_handle, const char *_name,
     timer_type_t _type);
-error_t timer_free (timer_handler_t _handler);
-error_t timer_start (timer_handler_t _handler, msecond_t _duration, 
+error_t timer_free (timer_handle_t _handle);
+error_t timer_start (timer_handle_t _handle, msecond_t _duration, 
     expiry_callback_t _cb, void *_arg);
-error_t timer_restart (timer_handler_t _handler);
-error_t timer_stop (timer_handler_t _handler, msecond_t *_p_remained);
-bool timer_is_started (const timer_handler_t _handler);
+error_t timer_restart (timer_handle_t _handle);
+error_t timer_stop (timer_handle_t _handle, msecond_t *_p_remained);
+bool timer_is_started (const timer_handle_t _handle);
 void timer_dump ();
 
 #ifdef __cplusplus

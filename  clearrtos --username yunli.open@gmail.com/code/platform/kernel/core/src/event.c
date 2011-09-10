@@ -31,13 +31,13 @@
 
 //lint -e655
 
-error_t event_receive (event_set_t _expected, event_set_handler_t _received, 
+error_t event_receive (event_set_t _expected, event_set_handle_t _received, 
     msecond_t _timeout, event_option_t _option)
 {
     interrupt_level_t level;
     event_option_t wait_option = EVENT_WAIT_ALL | EVENT_WAIT_ANY;
     event_option_t return_option = EVENT_RETURN_ALL | EVENT_RETURN_EXPECTED;
-    task_handler_t p_task;
+    task_handle_t p_task;
 
     if (is_in_interrupt ()) {
         return ERROR_T (ERROR_EVENT_RECV_INVCONTEXT);
@@ -111,29 +111,29 @@ again:
     return p_task->ecode_;
 }
 
-error_t event_send (task_handler_t _handler, event_set_t _sent)
+error_t event_send (task_handle_t _handle, event_set_t _sent)
 {
     interrupt_level_t level;
     bool wakeup_needed = false;
 
     level = global_interrupt_disable ();
-    if (is_invalid_task (_handler)) {
+    if (is_invalid_task (_handle)) {
         global_interrupt_enable (level);
         return ERROR_T (ERROR_EVENT_RECV_INVRECEIVER);
     }
-    _handler->event_received_ |= _sent;
-    if (0 == (int)_handler->event_option_) {
+    _handle->event_received_ |= _sent;
+    if (0 == (int)_handle->event_option_) {
         global_interrupt_enable (level);
         return 0;
     }
-    if (EVENT_WAIT_ALL == (_handler->event_option_ & EVENT_WAIT_ALL)) {
-        if ((_handler->event_expected_ & _handler->event_received_) == 
-            _handler->event_expected_) {
+    if (EVENT_WAIT_ALL == (_handle->event_option_ & EVENT_WAIT_ALL)) {
+        if ((_handle->event_expected_ & _handle->event_received_) == 
+            _handle->event_expected_) {
             wakeup_needed = true;
         }
     }
     else {
-        if ((_handler->event_expected_ & _handler->event_received_) != 0) {
+        if ((_handle->event_expected_ & _handle->event_received_) != 0) {
             wakeup_needed = true;
         }
     }
@@ -141,7 +141,7 @@ error_t event_send (task_handler_t _handler, event_set_t _sent)
         global_interrupt_enable (level);
         return 0;
     }
-    (void) task_state_change (_handler, TASK_STATE_READY);
+    (void) task_state_change (_handle, TASK_STATE_READY);
     global_interrupt_enable (level);
     task_schedule (null);
     return 0;
@@ -150,7 +150,7 @@ error_t event_send (task_handler_t _handler, event_set_t _sent)
 error_t event_clear ()
 {
     interrupt_level_t level;
-    task_handler_t p_task = task_self ();
+    task_handle_t p_task = task_self ();
 
     level = global_interrupt_disable ();
     if (is_invalid_task (p_task)) {

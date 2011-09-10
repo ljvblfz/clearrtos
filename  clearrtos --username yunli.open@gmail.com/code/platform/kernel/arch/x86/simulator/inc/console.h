@@ -32,7 +32,7 @@
 typedef struct {
     device_t common_;
     bool is_opened_;
-} device_console_t, *console_handler_t;
+} device_console_t, *console_handle_t;
 
 #ifdef  __cplusplus
 extern "C"
@@ -40,9 +40,9 @@ extern "C"
 #endif
 
 error_t console_driver_install (const char _name[]);
-error_t console_device_register (const char _name [], console_handler_t _handler);
+error_t console_device_register (const char _name [], console_handle_t _handle);
 
-void console_handler_set (device_handler_t _handler);
+void console_handle_set (device_handle_t _handle);
 void console_print (const char* _format, ...);
 
 #ifdef  __cplusplus

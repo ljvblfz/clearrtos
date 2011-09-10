@@ -35,14 +35,14 @@
 typedef u32_t device_mode_t;
 typedef u32_t open_mode_t;
 typedef int control_option_t;
-typedef struct type_device device_t, *device_handler_t;
+typedef struct type_device device_t, *device_handle_t;
 
 typedef struct {
-    error_t (*open_) (device_handler_t _handler, open_mode_t _mode);
-    error_t (*close_) (device_handler_t _handler);
-    error_t (*read_) (device_handler_t _handler, void *_buf, usize_t _size);
-    error_t (*write_) (device_handler_t _handler, const void *_buf, usize_t _size);
-    error_t (*control_) (device_handler_t _handler, control_option_t _option,
+    error_t (*open_) (device_handle_t _handle, open_mode_t _mode);
+    error_t (*close_) (device_handle_t _handle);
+    error_t (*read_) (device_handle_t _handle, void *_buf, usize_t _size);
+    error_t (*write_) (device_handle_t _handle, const void *_buf, usize_t _size);
+    error_t (*control_) (device_handle_t _handle, control_option_t _option,
         int _int_arg, void *_ptr_arg);
 } device_operation_t;
 
@@ -53,16 +53,16 @@ typedef struct {
     magic_number_t magic_number_;
     int count_opened_;
     char name_ [NAME_MAX_LENGTH*2 + 1];
-} driver_t, *driver_handler_t;
+} driver_t, *driver_handle_t;
 
 struct type_device {
     dll_node_t node_;
-    driver_handler_t driver_;
+    driver_handle_t driver_;
     magic_number_t magic_number_;
     char name_ [NAME_MAX_LENGTH + 1];
     // below variables should be initialized by each driver
     int interrupt_vector_;
-    void (*interrupt_handle_) (device_handler_t _handler);
+    void (*interrupt_handler_) (device_handle_t _handle);
 };
 
 #ifdef  __cplusplus
@@ -75,14 +75,14 @@ error_t device_registration_main ();
 
 error_t driver_install (const char _name [], const device_operation_t *_p_operation, 
     device_mode_t _mode);
-error_t device_register (const char _name [], device_handler_t _handler);
+error_t device_register (const char _name [], device_handle_t _handle);
 
-error_t device_open (device_handler_t *_p_handler, const char _name [], 
+error_t device_open (device_handle_t *_p_handle, const char _name [], 
     open_mode_t _mode);
-error_t device_close (device_handler_t _handler);
-error_t device_read (device_handler_t _handler, void *_buf, usize_t _size);
-error_t device_write (device_handler_t _handler, const void *_buf, usize_t _size);
-error_t device_control (device_handler_t _handler, control_option_t _option,
+error_t device_close (device_handle_t _handle);
+error_t device_read (device_handle_t _handle, void *_buf, usize_t _size);
+error_t device_write (device_handle_t _handle, const void *_buf, usize_t _size);
+error_t device_control (device_handle_t _handle, control_option_t _option,
     int _int_arg, void *_ptr_arg);
 
 #ifdef __cplusplus

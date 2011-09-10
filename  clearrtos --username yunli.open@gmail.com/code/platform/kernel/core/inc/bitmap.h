@@ -39,20 +39,20 @@ typedef u32_t bit_t;
 typedef struct {
     task_bitmap_row_t buffer_ [CONFIG_MAX_BITMAP_ROW];
     task_bitmap_row_t row_bitmap_;
-} task_bitmap_t, *task_bitmap_handler_t;
+} task_bitmap_t, *task_bitmap_handle_t;
 
 #ifdef  __cplusplus
 extern "C"
 {
 #endif
 
-void task_bitmap_init (task_bitmap_handler_t _handler);
+void task_bitmap_init (task_bitmap_handle_t _handle);
 
-void task_bitmap_bit_set (task_bitmap_handler_t _handler, bit_t _bit);
-void task_bitmap_bit_clear (task_bitmap_handler_t _handler, bit_t _bit);
+void task_bitmap_bit_set (task_bitmap_handle_t _handle, bit_t _bit);
+void task_bitmap_bit_clear (task_bitmap_handle_t _handle, bit_t _bit);
 
-bit_t task_bitmap_lowest_bit_get (const task_bitmap_handler_t _handler);
-bool task_bitmap_is_empty (const task_bitmap_handler_t _handler);
+bit_t task_bitmap_lowest_bit_get (const task_bitmap_handle_t _handle);
+bool task_bitmap_is_empty (const task_bitmap_handle_t _handle);
 
 #ifdef __cplusplus
 }

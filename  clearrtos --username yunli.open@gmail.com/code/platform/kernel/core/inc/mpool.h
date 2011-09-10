@@ -57,17 +57,17 @@ typedef struct {
     mpool_node_t *p_node_;
     // statistic
     statistic_t stats_nobuf_;
-} mpool_t, *mpool_handler_t;
+} mpool_t, *mpool_handle_t;
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
     
-error_t mpool_create (const char _name [], mpool_handler_t *_p_handler, 
+error_t mpool_create (const char _name [], mpool_handle_t *_p_handle, 
     void *_node, void *_buffer, msize_t _buffer_size, msize_t _buffer_count);
-error_t mpool_delete (mpool_handler_t _handler);
-void* mpool_buffer_alloc (mpool_handler_t _handler);
-error_t mpool_buffer_free (mpool_handler_t _handler, void* _p_buf);
+error_t mpool_delete (mpool_handle_t _handle);
+void* mpool_buffer_alloc (mpool_handle_t _handle);
+error_t mpool_buffer_free (mpool_handle_t _handle, void* _p_buf);
 void mpool_dump ();
 error_t module_mpool (system_state_t _state);
 

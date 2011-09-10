@@ -97,13 +97,13 @@ error_t task_create_hook_remove (task_create_hook_t _hook)
 }
 
 // this function will be called in KERNEL mode, we don't need to take a lock
-void task_create_hook_traverse (task_handler_t _handler)
+void task_create_hook_traverse (task_handle_t _handle)
 {
     int idx = 0;
     
     for (; idx <= TASK_CREATE_HOOK_LAST_INDEX && g_create_table [idx] != null;
         idx ++) {
-        g_create_table [idx] (_handler);
+        g_create_table [idx] (_handle);
     }
 }
 
@@ -132,7 +132,7 @@ error_t task_switch_hook_remove (task_switch_hook_t _hook)
 }
 
 // this function will be called in KERNEL mode, we don't need to take a lock
-void task_switch_hook_traverse (task_handler_t _from, task_handler_t _to)
+void task_switch_hook_traverse (task_handle_t _from, task_handle_t _to)
 {
     int idx = 0;
     
@@ -167,13 +167,13 @@ error_t task_delete_hook_remove (task_delete_hook_t _hook)
 }
 
 // this function will be called in KERNEL mode, we don't need to take a lock
-void task_delete_hook_traverse (task_handler_t _handler)
+void task_delete_hook_traverse (task_handle_t _handle)
 {
     int idx = 0;
     
     for (; idx <= TASK_DELETE_HOOK_LAST_INDEX && g_delete_table [idx] != null;
         idx ++) {
-        g_delete_table [idx] (_handler);
+        g_delete_table [idx] (_handle);
     }
 }
 

@@ -33,9 +33,9 @@
 static semaphore_t g_semaphore_pool [CONFIG_MAX_SEMAPHORE];
 static sync_container_t g_semaphore_container;
 
-static bool semaphore_callback_take (sync_object_handler_t _handler)
+static bool semaphore_callback_take (sync_object_handle_t _handle)
 {
-    semaphore_handler_t p_semaphore = (semaphore_handler_t) _handler;
+    semaphore_handle_t p_semaphore = (semaphore_handle_t) _handle;
     if (0 != p_semaphore->count_) {
         // semaphore is available, grab it
         p_semaphore->count_ --;
@@ -44,15 +44,15 @@ static bool semaphore_callback_take (sync_object_handler_t _handler)
     return false;
 }
 
-static void semaphore_callback_wait (sync_object_handler_t _handler)
+static void semaphore_callback_wait (sync_object_handle_t _handle)
 {
-    UNUSED (_handler);
+    UNUSED (_handle);
 }
 
-static bool semaphore_callback_give (sync_object_handler_t _handler,
+static bool semaphore_callback_give (sync_object_handle_t _handle,
     error_t *_p_ecode)
 {
-    semaphore_handler_t p_semaphore = (semaphore_handler_t) _handler;
+    semaphore_handle_t p_semaphore = (semaphore_handle_t) _handle;
 
     UNUSED (_p_ecode);
     
@@ -64,15 +64,15 @@ static bool semaphore_callback_give (sync_object_handler_t _handler,
     return false;
 }
 
-static void semaphore_callback_wake (sync_object_handler_t _handler)
+static void semaphore_callback_wake (sync_object_handle_t _handle)
 {
-    task_handler_t p_task;
+    task_handle_t p_task;
     bit_t bit;
     
-    UNUSED (_handler);
+    UNUSED (_handle);
 
-    bit = task_bitmap_lowest_bit_get (&_handler->pending_bitmap_);
-    task_bitmap_bit_clear (&_handler->pending_bitmap_, bit);
+    bit = task_bitmap_lowest_bit_get (&_handle->pending_bitmap_);
+    task_bitmap_bit_clear (&_handle->pending_bitmap_, bit);
     p_task = task_from_priority ((task_priority_t)bit);
     (void) task_state_change (p_task, TASK_STATE_READY);
 }
@@ -80,13 +80,13 @@ static void semaphore_callback_wake (sync_object_handler_t _handler)
 static bool semaphore_check_for_each (dll_t *_p_dll, dll_node_t *_p_node, void *_p_arg)
 {
     //lint -e{740, 826}
-    semaphore_handler_t handler = (semaphore_handler_t)_p_node;
+    semaphore_handle_t handle = (semaphore_handle_t)_p_node;
 
     UNUSED (_p_dll);
     UNUSED (_p_arg);
 
     console_print ("Error: semaphore \"%s\" isn't deleted\n", 
-        handler->object_.name_);
+        handle->object_.name_);
     return true;
 }
 
@@ -110,7 +110,7 @@ static void semaphore_init ()
         CONFIG_MAX_SEMAPHORE, sizeof (semaphore_t), &opt);
 }
 
-error_t semaphore_create (semaphore_handler_t *_p_handler, const char _name [], 
+error_t semaphore_create (semaphore_handle_t *_p_handle, const char _name [], 
     usize_t _count)
 {
     static bool initialized = false;
@@ -124,41 +124,41 @@ error_t semaphore_create (semaphore_handler_t *_p_handler, const char _name [],
     }
     global_interrupt_enable (level);
     ecode = sync_object_alloc (&g_semaphore_container, 
-        (sync_object_handler_t *)_p_handler, _name);
+        (sync_object_handle_t *)_p_handle, _name);
     if (0 == ecode) {
-        (*_p_handler)->count_ = _count;
+        (*_p_handle)->count_ = _count;
     }
     return ecode;
 }
 
-error_t semaphore_delete (semaphore_handler_t _handler)
+error_t semaphore_delete (semaphore_handle_t _handle)
 {
-    return sync_object_free (&_handler->object_);
+    return sync_object_free (&_handle->object_);
 }
 
-error_t semaphore_try_to_take (semaphore_handler_t _handler)
+error_t semaphore_try_to_take (semaphore_handle_t _handle)
 {
-    return sync_point_try_to_enter (&_handler->object_);
+    return sync_point_try_to_enter (&_handle->object_);
 }
 
-error_t semaphore_take (semaphore_handler_t _handler, msecond_t _timeout)
+error_t semaphore_take (semaphore_handle_t _handle, msecond_t _timeout)
 {
-    return sync_point_enter (&_handler->object_, _timeout);
+    return sync_point_enter (&_handle->object_, _timeout);
 }
 
-error_t semaphore_give (semaphore_handler_t _handler)
+error_t semaphore_give (semaphore_handle_t _handle)
 {
-    return sync_point_exit (&_handler->object_);
+    return sync_point_exit (&_handle->object_);
 }
 
 //lint -e{818}
-usize_t semaphore_count_get (const semaphore_handler_t _handler)
+usize_t semaphore_count_get (const semaphore_handle_t _handle)
 {
     interrupt_level_t level;
     usize_t count;
 
     level = global_interrupt_disable ();
-    count = _handler->count_;
+    count = _handle->count_;
     global_interrupt_enable (level);
     return count;
 }
@@ -167,13 +167,13 @@ static bool semaphore_dump_for_each (dll_t *_p_dll, dll_node_t *_p_node,
     void *_p_arg)
 {
     //lint -e{740, 826}
-    semaphore_handler_t handler = (semaphore_handler_t)_p_node;
+    semaphore_handle_t handle = (semaphore_handle_t)_p_node;
 
     UNUSED (_p_dll);
     UNUSED (_p_arg);
     
-    console_print ("  Name: %s\n", handler->object_.name_);
-    console_print ("    Count: %u\n", handler->count_);
+    console_print ("  Name: %s\n", handle->object_.name_);
+    console_print ("    Count: %u\n", handle->count_);
     console_print ("\n");
     return true;
 }

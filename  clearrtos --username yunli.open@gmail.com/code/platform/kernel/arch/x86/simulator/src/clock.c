@@ -30,39 +30,39 @@
 #include "errclock.h"
 #include "console.h"
 
-void tick_interrupt_handler (device_handler_t _handler)
+void tick_interrupt_handler (device_handle_t _handle)
 {
-    clock_handler_t handler = (clock_handler_t)_handler;
-    handler->tick_process_ ();
+    clock_handle_t handle = (clock_handle_t)_handle;
+    handle->tick_process_ ();
 }
 
-static error_t clock_open (device_handler_t _handler, open_mode_t _mode)
+static error_t clock_open (device_handle_t _handle, open_mode_t _mode)
 {
-    clock_handler_t handler = (clock_handler_t)_handler;
+    clock_handle_t handle = (clock_handle_t)_handle;
 
     UNUSED (_mode);
     
-    if (handler->is_opened_) {
+    if (handle->is_opened_) {
         return ERROR_T (ERROR_CLOCK_OPEN_OPENED);
     }
 
-    handler->is_opened_ = true;
+    handle->is_opened_ = true;
     return 0;
 }
 
-static error_t clock_close (device_handler_t _handler)
+static error_t clock_close (device_handle_t _handle)
 {
-    clock_handler_t handler = (clock_handler_t)_handler;
+    clock_handle_t handle = (clock_handle_t)_handle;
     
-    handler->is_opened_ = false;
+    handle->is_opened_ = false;
     return 0;
 }
 
 //lint -e{818}
-static error_t clock_control (device_handler_t _handler, 
+static error_t clock_control (device_handle_t _handle, 
     control_option_t _option, int _int_arg, void *_ptr_arg)
 {
-    clock_handler_t handler = (clock_handler_t)_handler;
+    clock_handle_t handle = (clock_handle_t)_handle;
     
     switch (_option)
     {
@@ -71,7 +71,7 @@ static error_t clock_control (device_handler_t _handler,
             struct itimerval tv;
             
             //lint -e{611}
-            handler->tick_process_ = (interrupt_handler_t) _ptr_arg;
+            handle->tick_process_ = (interrupt_handler_t) _ptr_arg;
             
             tv.it_value.tv_sec = 0;
             tv.it_value.tv_usec = (long) _int_arg*1000; // msec to usec
@@ -79,7 +79,7 @@ static error_t clock_control (device_handler_t _handler,
             tv.it_interval.tv_usec = (long) _int_arg*1000; // msec to usec
             (void) setitimer (ITIMER_REAL, &tv, 0);
 
-            interrupt_enable (_handler->interrupt_vector_);
+            interrupt_enable (_handle->interrupt_vector_);
         }
         break;
     case OPTION_TICK_STOP:
@@ -87,7 +87,7 @@ static error_t clock_control (device_handler_t _handler,
             struct itimerval  tv;
             struct sigaction  act;
 
-            interrupt_disable (_handler->interrupt_vector_);
+            interrupt_disable (_handle->interrupt_vector_);
             
             memset (&act, 0, sizeof(act));
             act.sa_handler = SIG_IGN;
@@ -113,11 +113,11 @@ error_t clock_driver_install (const char _name[])
     return driver_install (_name, &opt, 0);
 }
 
-error_t clock_device_register (const char _name [], clock_handler_t _handler)
+error_t clock_device_register (const char _name [], clock_handle_t _handle)
 {
-    _handler->common_.interrupt_vector_ = SIGALRM;
-    _handler->common_.interrupt_handle_ = tick_interrupt_handler;
-    _handler->is_opened_ = false;
-    return device_register (_name, &_handler->common_);
+    _handle->common_.interrupt_vector_ = SIGALRM;
+    _handle->common_.interrupt_handler_ = tick_interrupt_handler;
+    _handle->is_opened_ = false;
+    return device_register (_name, &_handle->common_);
 }
 

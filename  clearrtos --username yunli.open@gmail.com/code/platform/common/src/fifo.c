@@ -26,62 +26,62 @@
 #include "fifo.h"
 #include "clib.h"
 
-void fifo_init (fifo_handler_t _handler, void *_buffer, 
+void fifo_init (fifo_handle_t _handle, void *_buffer, 
     usize_t _element_size, usize_t _capacity)
 {
-    memset (_handler, 0, sizeof (*_handler));
+    memset (_handle, 0, sizeof (*_handle));
     memset (_buffer, 0, _element_size * _capacity);
-    _handler->capacity_ = _capacity;
-    _handler->buffer_addr_start_ = _buffer;
-    _handler->buffer_addr_end_ = _handler->buffer_addr_start_;
-    _handler->buffer_addr_end_ += _element_size * _capacity;
-    _handler->element_size_ = _element_size;
-    _handler->count_ = 0;
-    _handler->cursor_get_ = _buffer;
-    _handler->cursor_put_ = _buffer;
+    _handle->capacity_ = _capacity;
+    _handle->buffer_addr_start_ = _buffer;
+    _handle->buffer_addr_end_ = _handle->buffer_addr_start_;
+    _handle->buffer_addr_end_ += _element_size * _capacity;
+    _handle->element_size_ = _element_size;
+    _handle->count_ = 0;
+    _handle->cursor_get_ = _buffer;
+    _handle->cursor_put_ = _buffer;
 }
 
-void fifo_element_put (fifo_handler_t _handler, const void *_p_element)
+void fifo_element_put (fifo_handle_t _handle, const void *_p_element)
 {
-    if (_handler->element_size_ == sizeof (int)) {
+    if (_handle->element_size_ == sizeof (int)) {
         // there is a assumption that the address of buffer_addr_start_ is
         // aligned with the size of int *
-        *(int *)(void *)_handler->cursor_put_ = *(int *)(void *)_p_element;
+        *(int *)(void *)_handle->cursor_put_ = *(int *)(void *)_p_element;
     }
-    else if (_handler->element_size_ == sizeof (short)) {
-        *(short *)(void *)_handler->cursor_put_ = *(short *)(void *)_p_element;
+    else if (_handle->element_size_ == sizeof (short)) {
+        *(short *)(void *)_handle->cursor_put_ = *(short *)(void *)_p_element;
     }
-    else if (_handler->element_size_ == sizeof (char)) {
-        *(char *)_handler->cursor_put_ = *(char *)_p_element;
+    else if (_handle->element_size_ == sizeof (char)) {
+        *(char *)_handle->cursor_put_ = *(char *)_p_element;
     }
     else {
-        memcpy (_handler->cursor_put_, _p_element, _handler->element_size_);
+        memcpy (_handle->cursor_put_, _p_element, _handle->element_size_);
     }
-    _handler->count_ ++;
-    _handler->cursor_put_ += _handler->element_size_;
-    if (_handler->cursor_put_ >= _handler->buffer_addr_end_) {
-        _handler->cursor_put_ = _handler->buffer_addr_start_;
+    _handle->count_ ++;
+    _handle->cursor_put_ += _handle->element_size_;
+    if (_handle->cursor_put_ >= _handle->buffer_addr_end_) {
+        _handle->cursor_put_ = _handle->buffer_addr_start_;
     }
 }
 
-void fifo_element_get (fifo_handler_t _handler, void *_p_element)
+void fifo_element_get (fifo_handle_t _handle, void *_p_element)
 {
-    void *p_element = _handler->cursor_get_;
-    _handler->count_ --;
-    _handler->cursor_get_ += _handler->element_size_;
-    if (_handler->cursor_get_ >= _handler->buffer_addr_end_) {
-        _handler->cursor_get_ = _handler->buffer_addr_start_;
+    void *p_element = _handle->cursor_get_;
+    _handle->count_ --;
+    _handle->cursor_get_ += _handle->element_size_;
+    if (_handle->cursor_get_ >= _handle->buffer_addr_end_) {
+        _handle->cursor_get_ = _handle->buffer_addr_start_;
     }
-    if (_handler->element_size_ == sizeof (int)) {
+    if (_handle->element_size_ == sizeof (int)) {
         // there is a assumption that the address of buffer_addr_start_ is
         // aligned with the size of int *
         *(int *)_p_element = *(int *)p_element;
     }
-    else if (_handler->element_size_ == sizeof (char)) {
+    else if (_handle->element_size_ == sizeof (char)) {
         *(char *)_p_element = *(char *)p_element;
     }
     else {
-        memcpy (_p_element, p_element, _handler->element_size_);
+        memcpy (_p_element, p_element, _handle->element_size_);
     }
 }
 

@@ -33,7 +33,7 @@
 typedef struct {
     device_t common_;
     bool is_opened_;
-} device_ctrlc_t, *ctrlc_handler_t;
+} device_ctrlc_t, *ctrlc_handle_t;
 
 #ifdef  __cplusplus
 extern "C"
@@ -41,7 +41,7 @@ extern "C"
 #endif
 
 error_t ctrlc_driver_install (const char _name[]);
-error_t ctrlc_device_register (const char _name [], ctrlc_handler_t _handler);
+error_t ctrlc_device_register (const char _name [], ctrlc_handle_t _handle);
 
 #ifdef __cplusplus
 }

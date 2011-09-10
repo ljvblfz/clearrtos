@@ -47,42 +47,42 @@ typedef struct {
     byte_t *cursor_get_;
     // position for putting element
     byte_t *cursor_put_;
-} fifo_t, *fifo_handler_t;
+} fifo_t, *fifo_handle_t;
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-void fifo_init (fifo_handler_t _handler, void *_buffer, 
+void fifo_init (fifo_handle_t _handle, void *_buffer, 
     usize_t _element_size, usize_t _capacity);
-void fifo_element_put (fifo_handler_t _handler, const void *_p_element);
-void fifo_element_get (fifo_handler_t _handler, void *_p_element);
+void fifo_element_put (fifo_handle_t _handle, const void *_p_element);
+void fifo_element_get (fifo_handle_t _handle, void *_p_element);
 
 //lint -e818
 
-static inline bool fifo_is_empty (const fifo_handler_t _handler)
+static inline bool fifo_is_empty (const fifo_handle_t _handle)
 {
-    return (bool) (0 == _handler->count_);
+    return (bool) (0 == _handle->count_);
 }
 
-static inline bool fifo_is_full (const fifo_handler_t _handler)
+static inline bool fifo_is_full (const fifo_handle_t _handle)
 {
-    return (bool) (_handler->count_ == _handler->capacity_);
+    return (bool) (_handle->count_ == _handle->capacity_);
 }
 
-static inline usize_t fifo_capacity (const fifo_handler_t _handler)
+static inline usize_t fifo_capacity (const fifo_handle_t _handle)
 {
-    return _handler->capacity_;
+    return _handle->capacity_;
 }
 
-static inline usize_t fifo_count (const fifo_handler_t _handler)
+static inline usize_t fifo_count (const fifo_handle_t _handle)
 {
-    return _handler->count_;
+    return _handle->count_;
 }
 
-static inline usize_t fifo_element_size (const fifo_handler_t _handler)
+static inline usize_t fifo_element_size (const fifo_handle_t _handle)
 {
-    return _handler->element_size_;
+    return _handle->element_size_;
 }
 
 //lint +e818
