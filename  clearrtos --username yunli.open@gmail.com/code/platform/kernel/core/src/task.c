@@ -52,7 +52,7 @@
 typedef struct {
     statistic_t scheduled_;
     statistic_t overflowed_;
-    statistic_t invalid_hander_;
+    statistic_t invalid_handle_;
 } task_statistic_t;
 
 static task_t g_task_pool [TASK_PRIORITY_LEVELS];
@@ -419,7 +419,8 @@ error_t task_delete (task_handle_t _handle)
     }
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
-        ecode = ERROR_T (ERROR_TASK_DELETE_INVHANDLER);
+        g_statistics.invalid_handle_ ++;
+        ecode = ERROR_T (ERROR_TASK_DELETE_INVHANDLE);
         goto error;
     }
     ecode = task_state_change (_handle, TASK_STATE_DELETED);
@@ -454,7 +455,8 @@ error_t task_start (task_handle_t _handle, task_entry_t _entry, void *_p_arg)
 
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
-        ecode = ERROR_T (ERROR_TASK_START_INVHANDLER);
+        g_statistics.invalid_handle_ ++;
+        ecode = ERROR_T (ERROR_TASK_START_INVHANDLE);
         goto error;
     }
     if (TASK_STATE_CREATED != _handle->state_) {
@@ -482,7 +484,8 @@ error_t task_suspend (task_handle_t _handle)
 
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
-        ecode = ERROR_T (ERROR_TASK_SUSPEND_INVHANDLER);
+        g_statistics.invalid_handle_ ++;
+        ecode = ERROR_T (ERROR_TASK_SUSPEND_INVHANDLE);
         goto error;
     }
     if (TASK_STATE_CREATED == _handle->state_) {
@@ -518,7 +521,8 @@ error_t task_resume (task_handle_t _handle)
 
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
-        ecode = ERROR_T (ERROR_TASK_RESUME_INVHANDLER);
+        g_statistics.invalid_handle_ ++;
+        ecode = ERROR_T (ERROR_TASK_RESUME_INVHANDLE);
         goto error;
     }
     if (TASK_STATE_SUSPENDING != _handle->state_) {
@@ -654,8 +658,9 @@ error_t is_stack_overflowed (const task_handle_t _handle, bool *_p_overflowed)
 
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
+        g_statistics.invalid_handle_ ++;
         global_interrupt_enable (level);
-        return ERROR_T (ERROR_TASK_STACK_INVHANDLER);
+        return ERROR_T (ERROR_TASK_STACK_INVHANDLE);
     }
     p_top = (stack_unit_t *)_handle->stack_base_;
     if (p_top [0] != MAGIC_NUMBER_STACK || p_top [1] != MAGIC_NUMBER_STACK) {
@@ -682,8 +687,9 @@ error_t stack_used_percentage (const task_handle_t _handle, int *_p_percentage)
     
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
+        g_statistics.invalid_handle_ ++;
         global_interrupt_enable (level);
-        return ERROR_T (ERROR_TASK_STACK_INVHANDLER);
+        return ERROR_T (ERROR_TASK_STACK_INVHANDLE);
     }
     p_top = (stack_unit_t *)_handle->stack_base_;
     // we don't want to lock the interrupt to worsen the response for interrupt
@@ -710,6 +716,7 @@ static const char *task_state_description (const task_handle_t _handle)
     
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
+        g_statistics.invalid_handle_ ++;
         global_interrupt_enable (level);
         return "INVALID";
     }
@@ -783,7 +790,7 @@ void task_dump ()
     console_print ("----------\n");
     console_print ("    Task Scheduled: %u\n", g_statistics.scheduled_);
     console_print ("  Stack Overflowed: %u\n", g_statistics.overflowed_);
-    console_print ("   Invalid Handler: %u\n", g_statistics.invalid_hander_);
+    console_print ("    Invalid Handle: %u\n", g_statistics.invalid_handle_);
     console_print ("      Tick Delayed: %u\n", tick_delayed ());
     console_print ("\n");
     console_print ("Task Details\n");

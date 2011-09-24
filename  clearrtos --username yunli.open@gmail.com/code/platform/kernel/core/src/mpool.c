@@ -119,7 +119,7 @@ error_t mpool_delete (mpool_handle_t _handle)
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
         global_interrupt_enable (level);
-        return ERROR_T (ERROR_MPOOL_DELETE_INVHANDLER);
+        return ERROR_T (ERROR_MPOOL_DELETE_INVHANDLE);
     }
     
     _handle->magic_number_ = 0;
@@ -168,7 +168,7 @@ error_t mpool_buffer_free (mpool_handle_t _handle, void* _p_buf)
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
         global_interrupt_enable (level);
-        return ERROR_T (ERROR_MPOOL_FREE_INVHANDLER);
+        return ERROR_T (ERROR_MPOOL_FREE_INVHANDLE);
     }
     
     if (free_addr < _handle->addr_start_ || free_addr >= _handle->addr_end_) {

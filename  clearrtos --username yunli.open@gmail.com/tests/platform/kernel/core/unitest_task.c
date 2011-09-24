@@ -53,8 +53,7 @@ static void task_suspending (const char _name [], void *_p_arg)
     UNITEST_EQUALS (g_task_running, true);
 
     UNITEST_EQUALS (task_delete (handle), 0);
-    UNITEST_EQUALS (task_suspend (handle), 
-        ERROR_T (ERROR_TASK_SUSPEND_INVHANDLER));
+    UNITEST_EQUALS (task_suspend (handle), ERROR_T (ERROR_TASK_SUSPEND_INVHANDLE));
 
     (void) task_create (&g_handle [1], "test", 1, g_stack [1], sizeof (g_stack [0]));
             

@@ -117,7 +117,7 @@ error_t sync_object_free (sync_object_handle_t _handle)
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
         global_interrupt_enable (level);
-        return ERROR_T (ERROR_SYNC_FREE_INVHANDLER);
+        return ERROR_T (ERROR_SYNC_FREE_INVHANDLE);
     }
     container = _handle->container_;
     if (task_bitmap_is_empty (&_handle->pending_bitmap_)) {
@@ -158,7 +158,7 @@ error_t sync_point_try_to_enter (sync_object_handle_t _handle)
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
         global_interrupt_enable (level);
-        return ERROR_T (ERROR_SYNC_ENTER_INVHANDLER);
+        return ERROR_T (ERROR_SYNC_ENTER_INVHANDLE);
     }
     if (is_invalid_task (task_self ())) {
         global_interrupt_enable (level);
@@ -185,7 +185,7 @@ error_t sync_point_enter (sync_object_handle_t _handle, msecond_t _timeout)
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
         global_interrupt_enable (level);
-        return ERROR_T (ERROR_SYNC_ENTER_INVHANDLER);
+        return ERROR_T (ERROR_SYNC_ENTER_INVHANDLE);
     }
     if (is_invalid_task (p_task)) {
         global_interrupt_enable (level);
@@ -220,7 +220,7 @@ error_t sync_point_exit (sync_object_handle_t _handle)
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
         global_interrupt_enable (level);
-        return ERROR_T (ERROR_SYNC_LEAVE_INVHANDLER);
+        return ERROR_T (ERROR_SYNC_LEAVE_INVHANDLE);
     }
     container = _handle->container_;
     if (container->opt_.exit_ (_handle, &ecode)) {
