@@ -162,7 +162,7 @@ error_t device_register (const char _name [], device_handle_t _handle)
         return ERROR_T (ERROR_DEVICE_REGISTER_INVNAME);
     }
     if (null == _handle) {
-        return ERROR_T (ERROR_DEVICE_REGISTER_INVHANDLER);
+        return ERROR_T (ERROR_DEVICE_REGISTER_INVHANDLE);
     }
     // a device only can be registered before system is UP
     if (system_state () > STATE_INITIALIZING) {
@@ -260,7 +260,7 @@ error_t device_close (device_handle_t _handle)
     error_t ecode;
     
     if (is_invalid_handle (_handle)) {
-        return ERROR_T (ERROR_DEVICE_CLOSE_INVHANDLER);
+        return ERROR_T (ERROR_DEVICE_CLOSE_INVHANDLE);
     }
 
     ecode = _handle->driver_->operation_.close_ (_handle);
@@ -275,7 +275,7 @@ error_t device_close (device_handle_t _handle)
 error_t device_read (device_handle_t _handle, void *_buf, usize_t _size)
 {
     if (is_invalid_handle (_handle)) {
-        return ERROR_T (ERROR_DEVICE_READ_INVHANDLER);
+        return ERROR_T (ERROR_DEVICE_READ_INVHANDLE);
     }
 
     if (null == _handle->driver_->operation_.read_) {
@@ -287,7 +287,7 @@ error_t device_read (device_handle_t _handle, void *_buf, usize_t _size)
 error_t device_write (device_handle_t _handle, const void *_buf, usize_t _size)
 {
     if (is_invalid_handle (_handle)) {
-        return ERROR_T (ERROR_DEVICE_WRITE_INVHANDLER);
+        return ERROR_T (ERROR_DEVICE_WRITE_INVHANDLE);
     }
 
     if (null == _handle->driver_->operation_.write_) {
@@ -300,7 +300,7 @@ error_t device_control (device_handle_t _handle, control_option_t _option,
     int _int_arg, void *_ptr_arg)
 {
     if (is_invalid_handle (_handle)) {
-        return ERROR_T (ERROR_DEVICE_CONTROL_INVHANDLER);
+        return ERROR_T (ERROR_DEVICE_CONTROL_INVHANDLE);
     }
 
     if (null == _handle->driver_->operation_.control_) {

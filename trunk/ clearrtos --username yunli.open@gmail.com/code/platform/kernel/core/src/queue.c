@@ -143,7 +143,7 @@ error_t queue_delete (queue_handle_t _handle)
     }
 
     if (is_invalid_handle (_handle)) {
-        return ERROR_T (ERROR_QUEUE_DELETE_INVHANDLER);
+        return ERROR_T (ERROR_QUEUE_DELETE_INVHANDLE);
     }
 
     level = global_interrupt_disable ();
@@ -161,7 +161,7 @@ error_t queue_message_send (queue_handle_t _handle, const void *_p_element)
     interrupt_level_t level;
 
     if (is_invalid_handle (_handle)) {
-        return ERROR_T (ERROR_QUEUE_SEND_INVHANDLER);
+        return ERROR_T (ERROR_QUEUE_SEND_INVHANDLE);
     }
     
     level = global_interrupt_disable ();
@@ -182,7 +182,7 @@ error_t queue_message_receive (queue_handle_t _handle, msecond_t _timeout,
     interrupt_level_t level;
 
     if (is_invalid_handle (_handle)) {
-        return ERROR_T (ERROR_QUEUE_RECV_INVHANDLER);
+        return ERROR_T (ERROR_QUEUE_RECV_INVHANDLE);
     }
     
     ecode = semaphore_take (_handle->semaphore_, _timeout);
@@ -201,7 +201,7 @@ bool queue_is_empty (const queue_handle_t _handle)
     bool is_empty;
 
     if (is_invalid_handle (_handle)) {
-        return ERROR_T (ERROR_QUEUE_EMPTY_INVHANDLER);
+        return ERROR_T (ERROR_QUEUE_EMPTY_INVHANDLE);
     }
 
     level = global_interrupt_disable ();
@@ -216,7 +216,7 @@ bool queue_is_full (const queue_handle_t _handle)
     bool is_full;
 
     if (is_invalid_handle (_handle)) {
-        return ERROR_T (ERROR_QUEUE_FULL_INVHANDLER);
+        return ERROR_T (ERROR_QUEUE_FULL_INVHANDLE);
     }
 
     level = global_interrupt_disable ();

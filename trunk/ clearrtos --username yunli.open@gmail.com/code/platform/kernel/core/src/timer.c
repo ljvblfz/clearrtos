@@ -222,7 +222,7 @@ error_t timer_alloc (timer_handle_t *_p_handle, const char *_name,
     timer_handle_t handle;
     
     if (0 == _p_handle) {
-        return ERROR_T (ERROR_TIMER_ALLOC_INVHANDLER);
+        return ERROR_T (ERROR_TIMER_ALLOC_INVHANDLE);
     }
 
     *_p_handle = null;
@@ -267,7 +267,7 @@ error_t timer_free (timer_handle_t _handle)
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
         global_interrupt_enable (level);
-        return ERROR_T (ERROR_TIMER_FREE_INVHANDLER);
+        return ERROR_T (ERROR_TIMER_FREE_INVHANDLE);
     }
     if (TIMER_STARTED == _handle->state_) {
         timer_handle_t next;
@@ -368,7 +368,7 @@ error_t timer_start (timer_handle_t _handle, msecond_t _duration,
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
         global_interrupt_enable (level);
-        return ERROR_T (ERROR_TIMER_START_INVHANDLER);
+        return ERROR_T (ERROR_TIMER_START_INVHANDLE);
     }
     if (TIMER_STARTED == _handle->state_) {
         g_statistics.abnormal_ ++;
@@ -394,7 +394,7 @@ error_t timer_restart (timer_handle_t _handle)
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
         global_interrupt_enable (level);
-        return ERROR_T (ERROR_TIMER_RESTART_INVHANDLER);
+        return ERROR_T (ERROR_TIMER_RESTART_INVHANDLE);
     }
     if (TIMER_STOPPED != _handle->state_) {
         g_statistics.abnormal_ ++;
@@ -431,7 +431,7 @@ error_t timer_stop (timer_handle_t _handle, msecond_t *_p_remained)
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
         global_interrupt_enable (level);
-        return ERROR_T (ERROR_TIMER_STOP_INVHANDLER);
+        return ERROR_T (ERROR_TIMER_STOP_INVHANDLE);
     }
     if (_handle->state_ != TIMER_STARTED) {
         g_statistics.abnormal_ ++;
