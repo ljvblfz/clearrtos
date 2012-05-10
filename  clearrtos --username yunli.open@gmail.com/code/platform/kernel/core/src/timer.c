@@ -271,18 +271,18 @@ error_t timer_free (timer_handle_t _handle)
     }
     if (TIMER_STARTED == _handle->state_) {
         timer_handle_t next;
+        bucket_t *p_bucket = &g_buckets [_handle->bucket_index_];
         
         if (g_timer_next == _handle) {
             g_timer_next = (timer_handle_t) dll_next (&g_bucket_firing->dll_, 
                 &_handle->node_);
         }
-        next = (timer_handle_t)dll_next 
-            (&g_buckets [_handle->bucket_index_].dll_, &_handle->node_);
+        next = (timer_handle_t)dll_next (&p_bucket->dll_, &_handle->node_);
         if (0 != next) {
             next->round_ += _handle->round_;
         }
-        dll_remove (&g_buckets [_handle->bucket_index_].dll_, &_handle->node_);
-        if (g_buckets [_handle->bucket_index_].reentrance_ > 0) {
+        dll_remove (&p_bucket->dll_, &_handle->node_);
+        if (p_bucket->reentrance_ > 0) {
             g_bucket_firing->level_ ++;
         }
     }
@@ -344,12 +344,12 @@ redo:
             goto redo;
         }
     }
-    if (g_bucket_firing == &g_buckets [_handle->bucket_index_]) {
+    if (g_bucket_firing == p_bucket) {
         if(0 == g_timer_next || _handle->round_ <= g_timer_next->round_) {
             g_timer_next = _handle;
         }
     }
-    g_buckets [_handle->bucket_index_].hit_ ++;
+    p_bucket->hit_ ++;
     if (0 == -- p_bucket->reentrance_) {
         p_bucket->level_ = 0;
     }
@@ -427,6 +427,7 @@ error_t timer_stop (timer_handle_t _handle, msecond_t *_p_remained)
 {
     interrupt_level_t level;
     timer_handle_t next;
+    bucket_t *p_bucket;
     
     level = global_interrupt_disable ();
     if (is_invalid_handle (_handle)) {
@@ -438,15 +439,16 @@ error_t timer_stop (timer_handle_t _handle, msecond_t *_p_remained)
         global_interrupt_enable (level);
         return ERROR_T (ERROR_TIMER_STOP_INVSTATE);
     }
+    
     if (g_timer_next == _handle) {
         g_timer_next = (timer_handle_t) dll_next (&g_bucket_firing->dll_, 
             &_handle->node_);
     }
+    p_bucket = &g_buckets [_handle->bucket_index_];
     if (_p_remained != null) {
         timer_remained_t remained = {_handle, 0};
         
-        (void) dll_traverse (&g_buckets [_handle->bucket_index_].dll_, 
-            timer_calculate_remained, &remained);
+        (void) dll_traverse (&p_bucket->dll_, timer_calculate_remained, &remained);
         *_p_remained = remained.remained_round_ * CONFIG_MAX_BUCKET;
         if (g_cursor > _handle->bucket_index_) {
             *_p_remained = (*_p_remained) * CONFIG_MAX_BUCKET - 
@@ -459,15 +461,14 @@ error_t timer_stop (timer_handle_t _handle, msecond_t *_p_remained)
         *_p_remained *= CONFIG_TICK_DURATION_IN_MSEC;
     }
     _handle->state_ = TIMER_STOPPED;
-    next = (timer_handle_t)dll_next (
-        &g_buckets [_handle->bucket_index_].dll_, &_handle->node_);
+    next = (timer_handle_t)dll_next (&p_bucket->dll_, &_handle->node_);
     if (0 != next) {
         next->round_ += _handle->round_;
     }
-    dll_remove (&g_buckets [_handle->bucket_index_].dll_, &_handle->node_);
+    dll_remove (&p_bucket->dll_, &_handle->node_);
     dll_push_tail (&g_inactive_timer, &_handle->node_);
-    if (g_buckets [_handle->bucket_index_].reentrance_ > 0) {
-        g_buckets [_handle->bucket_index_].level_ ++;
+    if (p_bucket->reentrance_ > 0) {
+        p_bucket->level_ ++;
     }
     global_interrupt_enable (level);
 
