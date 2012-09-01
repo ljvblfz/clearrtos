@@ -87,7 +87,8 @@ DIR_UNITEST = unitest
 DIR_COVERAGE = coverage
 DIR_PROFILE = profile
 
-.PHONY: release debug clean touch unitest test force creport scheck dcheck dreport profile
+.PHONY: release debug clean touch unitest test force 
+.PHONY: creport scheck dcheck dreport profile clean_gcda
 
 release debug clean unitest scheck:
 	@set -e; \
@@ -113,7 +114,12 @@ $(DIR_UNITEST)/unitest_%: force
 	./$@
 endif
 
-test: $(UTS)
+GCDAS = $(addsuffix /uobjs/*.gcda, $(COMMON_DIRS) $(UT_DIRS))
+
+clean_gcda: force
+	@$(RM) $(RMFLAGS) $(GCDAS)
+
+test: clean_gcda $(UTS)
 	@touch $(DIR_UNITEST)/tested
 
 force:
