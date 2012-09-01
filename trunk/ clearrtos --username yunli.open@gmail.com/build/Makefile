@@ -78,6 +78,7 @@ endif
 RM = rm
 MKDIR = mkdir
 MV = mv
+CHMOD = chmod
 RMFLAGS = -fr
 MKDIRFLAGS = -p
 RMS = release debug unitest $(DIR_COVERAGE) scheck $(DIR_PROFILE)
@@ -135,6 +136,7 @@ endif
 
 $(DIR_COVERAGE):
 	$(MKDIR) $@
+	$(CHMOD) --reference=$@ -R $(ROOT)
 
 creport: $(DIR_COVERAGE)
 	@set -e; \
