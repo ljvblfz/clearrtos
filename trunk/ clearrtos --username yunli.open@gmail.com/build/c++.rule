@@ -152,10 +152,7 @@ $(DIR_OBJS)/%.o: $(DEP_DIR_OBJS) %.cpp
 $(DIR_OBJS)/%.dep: $(DEP_DIR_OBJS) %.cpp
 	@echo "Creating $@ ..."
 	@set -e ; \
-	$(RM) $(RMFLAGS) $@.tmp ; \
-	$(CXX) $(INCLUDE_DIRS) -E -MM $(filter %.cpp, $^) > $@.tmp ; \
-	sed 's,\(.*\)\.o[ :]*,$(DIR_OBJS)/\1.o $(DIR_OBJS)/\1.chk $@: ,g' < $@.tmp > $@ ; \
-	$(RM) $(RMFLAGS) $@.tmp ; \
+	$(CXX) $(INCLUDE_DIRS) -E -MM -MF $@ -MT "$(subst .dep,.o,$@) $@ $(subst .dep,.chk,$@)" $(filter %.cpp, $^) ; \
 	if [ -n "$(UTS)" ] ; then echo "$(DIR_TARGET)/$*.exe: $(DIR_OBJS)/$*.o" >> $@ ; fi
 $(DIR_OBJS)/%.chk: $(DEP_DIR_OBJS) %.cpp
 	$(DIR_CHKER)/$(CHKER) $(CHK_CHKER_DIR) $(CHK_INCLUDE_DIRS) $(CHKFLAGS) -libdir"($(CHK_ROOT_DIR)\*)" $(filter %.cpp, $^)
