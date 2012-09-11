@@ -155,18 +155,12 @@ $(DIR_OBJS)/%.o: $(DEP_DIR_OBJS) %.S
 $(DIR_OBJS)/%.dep: $(DEP_DIR_OBJS) %.c
 	@echo "Creating $@ ..."
 	@set -e ; \
-	$(RM) $(RMFLAGS) $@.tmp ; \
-	$(CC) $(INCLUDE_DIRS) -E -MM $(filter %.c, $^) > $@.tmp ; \
-	sed 's,\(.*\)\.o[ :]*,$(DIR_OBJS)/\1.o $@ $(DIR_OBJS)/\1.chk: ,g' < $@.tmp > $@ ; \
-	$(RM) $(RMFLAGS) $@.tmp ; \
+	$(CC) $(INCLUDE_DIRS) -E -MM -MF $@ -MT "$(subst .dep,.o,$@) $@ $(subst .dep,.chk,$@)" $(filter %.c, $^); \
 	if [ -n "$(UTS)" ] ; then echo "$(DIR_TARGET)/$*.exe: $(DIR_OBJS)/$*.o" >> $@ ; fi
 $(DIR_OBJS)/%.dep: $(DEP_DIR_OBJS) %.S
 	@echo "Creating $@ ..."
 	@set -e ; \
-	$(RM) $(RMFLAGS) $@.tmp ; \
-	$(CC) $(INCLUDE_DIRS) -E -MM $(filter %.S, $^) > $@.tmp ; \
-	sed 's,\(.*\)\.o[ :]*,$(DIR_OBJS)/\1.o $@: ,g' < $@.tmp > $@ ; \
-	$(RM) $(RMFLAGS) $@.tmp ; 
+	$(CC) $(INCLUDE_DIRS) -E -MM -MF $@ -MT "$(subst .dep,.o,$@) $@" $(filter %.S, $^);
 $(DIR_OBJS)/%.chk: $(DEP_DIR_OBJS) %.c
 	$(DIR_CHKER)/$(CHKER) $(CHK_CHKER_DIR) $(CHK_INCLUDE_DIRS) $(CHKFLAGS) -libdir"($(CHK_ROOT_DIR)\*)" $(filter %.c, $^)
 	@touch $@
