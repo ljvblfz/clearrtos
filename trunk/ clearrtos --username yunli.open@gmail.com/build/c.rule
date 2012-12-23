@@ -90,6 +90,13 @@ LIB := $(addprefix $(DIR_TARGET)/, $(LIB))
 RMS += $(LIB)
 endif
 
+ifeq ("$(wildcard $(DIR_OBJS))", "")
+DEP_DIR_OBJS := $(DIR_OBJS)
+endif
+ifeq ("$(wildcard $(DIR_TARGET))", "")
+DEP_DIR_TARGET := $(DIR_TARGET)
+endif
+
 ifneq ("$(INCLUDE_DIRS)", "")
 ifeq ($(MAKECMDGOALS), scheck)
 CHK_INCLUDE_DIRS += $(INCLUDE_DIRS)
@@ -134,26 +141,26 @@ endif
 
 $(DIRS):
 	$(MKDIR) $@
-$(EXE): $(DIR_TARGET) $(OBJS) $(DEP_LIBS)
+$(EXE): $(DEP_DIR_TARGET) $(OBJS) $(DEP_LIBS)
 	$(CC) -L$(DIR_TARGET) -o $@ $(filter %.o, $^) -Wl,-Map=$@.map $(LINK_LIBS)
-$(UTS): $(DIR_TARGET) $(DEP_LIBS)
+$(UTS): $(DEP_DIR_TARGET) $(DEP_LIBS)
 	$(CC) -L$(DIR_TARGET) -o $@ $(filter %.o, $^) -Wl,-Map=$@.map $(LINK_LIBS)
-$(LIB): $(DIR_TARGET) $(OBJS)
+$(LIB): $(DEP_DIR_TARGET) $(OBJS)
 	$(AR) $(ARFLAGS) $@ $(filter %.o, $^)
 
-$(DIR_OBJS)/%.o: $(DIR_OBJS) %.c
+$(DIR_OBJS)/%.o: $(DEP_DIR_OBJS) %.c
 	$(CC) $(CFLAGS) $(INCLUDE_DIRS) -o $@ -c $(filter %.c, $^)
-$(DIR_OBJS)/%.o: $(DIR_OBJS) %.S
+$(DIR_OBJS)/%.o: $(DEP_DIR_OBJS) %.S
 	$(CC) $(CFLAGS) $(INCLUDE_DIRS) -o $@ -c $(filter %.S, $^)
-$(DIR_OBJS)/%.dep: $(DIR_OBJS) %.c
+$(DIR_OBJS)/%.dep: $(DEP_DIR_OBJS) %.c
 	@echo "Creating $@ ..."
 	@set -e ; \
 	$(CC) $(INCLUDE_DIRS) -E -MM -MF $@ -MT "$(subst .dep,.o,$@) $@ $(subst .dep,.chk,$@)" $(filter %.c, $^); \
 	if [ -n "$(UTS)" ] ; then echo "$(DIR_TARGET)/$*.exe: $(DIR_OBJS)/$*.o" >> $@ ; fi
-$(DIR_OBJS)/%.dep: $(DIR_OBJS) %.S
+$(DIR_OBJS)/%.dep: $(DEP_DIR_OBJS) %.S
 	@echo "Creating $@ ..."
 	@set -e ; \
 	$(CC) $(INCLUDE_DIRS) -E -MM -MF $@ -MT "$(subst .dep,.o,$@) $@" $(filter %.S, $^);
-$(DIR_OBJS)/%.chk: $(DIR_OBJS) %.c
+$(DIR_OBJS)/%.chk: $(DEP_DIR_OBJS) %.c
 	$(DIR_CHKER)/$(CHKER) $(CHK_CHKER_DIR) $(CHK_INCLUDE_DIRS) $(CHKFLAGS) -libdir"($(CHK_ROOT_DIR)\*)" $(filter %.c, $^)
 	@touch $@
