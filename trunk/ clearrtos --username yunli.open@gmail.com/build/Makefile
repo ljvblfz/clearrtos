@@ -45,6 +45,7 @@ NONUT_DIRS = \
     $(ROOT)/code/application/mutex \
     $(ROOT)/code/application/event \
     $(ROOT)/code/application/queue \
+    $(ROOT)/code/application/heap
     
 UT_DIRS = \
     $(ROOT)/tests/platform/common \

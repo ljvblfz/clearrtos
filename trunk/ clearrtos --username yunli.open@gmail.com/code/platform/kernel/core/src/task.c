@@ -791,7 +791,6 @@ void task_dump ()
     console_print ("    Task Scheduled: %u\n", g_statistics.scheduled_);
     console_print ("  Stack Overflowed: %u\n", g_statistics.overflowed_);
     console_print ("    Invalid Handle: %u\n", g_statistics.invalid_handle_);
-    console_print ("      Tick Delayed: %u\n", tick_delayed ());
     console_print ("\n");
     console_print ("Task Details\n");
     console_print ("------------\n");

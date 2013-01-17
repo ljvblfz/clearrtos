@@ -109,6 +109,7 @@ void unitest_main (int argc, char *argv[])
 
     UNITEST_EQUALS (task_start (g_handle [0], task_suspending, 0), 0);
     UNITEST_EQUALS (task_start (g_handle [1], task_suspended, 0), 0);
+
     multitasking_start ();
 
     task_dump ();

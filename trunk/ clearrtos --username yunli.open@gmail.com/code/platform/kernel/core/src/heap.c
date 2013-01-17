@@ -109,10 +109,8 @@ error_t heap_init (address_t _start, address_t _end, msize_t _alignment_in_bits)
         return ERROR_T (ERROR_HEAP_INIT_INVALIGN);
     }
     
-    g_mhead_size = (sizeof (mhead_t) + g_alignment_bytes - 1) 
-        >> g_alignment_in_bits;
-    g_mtail_size = (sizeof (mtail_t) + g_alignment_bytes - 1) 
-        >> g_alignment_in_bits;
+    g_mhead_size = ROUND_UP (sizeof (mhead_t), g_alignment_bytes);
+    g_mtail_size = ROUND_UP (sizeof (mtail_t), g_alignment_bytes);
     // initialize the g_mblock_free, it holds first free block
     g_mblock_free.next_ = ALIGN (_start, g_alignment_bytes);
     // the length is in g_alignment_bytes unit
@@ -160,8 +158,8 @@ void* heap_alloc (msize_t _size, mlocation_t _loc, error_t *_p_error)
     }
     
     // convert the _size into g_alignment_bytes unit
-    size_required = ((_size + g_alignment_bytes - 1) >> g_alignment_in_bits);
-    size_required += g_mhead_size + g_mtail_size;
+    size_required = g_mhead_size + ROUND_UP (_size, g_alignment_bytes) +
+        g_mtail_size;
     level = global_interrupt_disable ();
     // check whether have enough memory for this allocation request to fast failure
     if (!mblock_integrity_check (&g_mblock_free) || 
