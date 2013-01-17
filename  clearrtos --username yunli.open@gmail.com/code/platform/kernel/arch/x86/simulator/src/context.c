@@ -26,7 +26,7 @@
 #include "clib.h"
 #include "context.h"
 
-//lint -e123 -esym(752, _root_context_init) -esym(754, old_esp_)
+//lint -e123 -esym(752, _first_context_init) -esym(754, old_esp_)
 
 #define CPU_STACK_ALIGNMENT     4
 #define BOTTOM_MAGIC_NUMBER     0xDEADDEAD
@@ -41,9 +41,9 @@ typedef struct {
     register_t old_esp_;
 } root_frame_t;
 
-static void root_context_init (void (*_task_entry)(), 
+static void first_context_init (void (*_task_entry)(), 
     task_context_t *_p_context) __attribute__((noinline));
-static void root_context_init (void (*_task_entry)(), task_context_t *_p_context)
+static void first_context_init (void (*_task_entry)(), task_context_t *_p_context)
 {
     if (context_save (_p_context)) {
         _task_entry ();
@@ -66,8 +66,9 @@ asm volatile(
     "popl %%edi              \n"
     // The reason why we don't want to initialize the EBP is when the code is 
     // build with -O2 option, the GCC will optimize the code to use EBP at the
-    // end of root_context_init (). So if we initialize the EBP here it will cause crash.
-    "call _root_context_init \n"
+    // end of first_context_init (). So if we initialize the EBP here it will 
+    // cause crash.
+    "call _first_context_init \n"
     "movl 8(%%esp), %%esp    \n"
     ::"r"(_p_frame):"ebx","esi","edi"
     );
@@ -112,5 +113,5 @@ void context_switch_in_interrupt (task_context_t *_p_current,
     // TBD
 }
 
-weak_alias (root_context_init, _root_context_init)
+weak_alias (first_context_init, _first_context_init)
 

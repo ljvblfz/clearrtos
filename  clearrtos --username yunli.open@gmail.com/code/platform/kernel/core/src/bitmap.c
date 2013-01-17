@@ -83,9 +83,12 @@ static inline bit_t bitmap_to_bit (u32_t _bitmap)
 {
     int bitmap_byte;
 
+    /* FIXME: we suppose the _bitmap is never be zero for accelerating conversion.
+       moving forward, we shall put a assert() statement here for debugging.
     if (0 == _bitmap) {
         return INVALID_BIT;
     }
+    */
     
     bitmap_byte = _bitmap & 0xFF;
     if (0 != bitmap_byte) {
@@ -109,16 +112,8 @@ static inline bit_t bitmap_to_bit (u32_t _bitmap)
 //lint -e{818}
 bit_t task_bitmap_lowest_bit_get (const task_bitmap_handle_t _handle)
 {
-    bit_t row, bit;
-
-    row = bitmap_to_bit (_handle->row_bitmap_);
-    if (INVALID_BIT == row) {
-        return row;
-    }
-
-    bit = bitmap_to_bit (_handle->buffer_[row]);
-    bit += row << g_bits_per_row;
-    return bit;
+    bit_t row = bitmap_to_bit (_handle->row_bitmap_);
+    return (row << g_bits_per_row) + bitmap_to_bit (_handle->buffer_[row]);
 }
 
 //lint -e{818}
